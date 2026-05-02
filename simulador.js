@@ -1,9 +1,9 @@
 /**
- * A.S.T Soluciones Tecnológicas - Gemelo Digital
- * Controlador: Integración Cloud Adafruit IO
+ * A.S.T Soluciones Tecnológicas - Analizador Térmico
+ * Lógica de Generación Comparativa Real (Gas vs Biomasa)
  */
 
-const PCI_DATA = { biomasa: 17, gas: 50 };
+const PCI_DATA = { biomasa: 17, gas: 50 }; // MJ/kg
 let intervaloIoT = null;
 
 // --- SEGURIDAD (Bypass GitHub) ---
@@ -55,18 +55,27 @@ async function fetchCloudData() {
         if (response.ok) {
             const data = await response.json();
             const tempVal = parseFloat(data.value);
-            
             document.getElementById('temp_vapor').value = tempVal.toFixed(1);
             
-            // Función de transferencia: 32°C arranque -> 105°C nominal (3.2V)
-            let vSim = (tempVal > 32) ? (tempVal < 105 ? ((tempVal - 32) * 3.2 / (105 - 32)) : 3.2) : 0;
-            document.getElementById('voltaje_gen').value = vSim.toFixed(2);
+            // --- LÓGICA DE GENERACIÓN REALISTA ---
+            const combustible = document.getElementById('tipo_combustible').value;
             
+            // Factor de Potencia según PCI: El gas es ~2.9 veces más potente
+            const factorPotencia = PCI_DATA[combustible] / 17; 
+            
+            // Voltaje base por temperatura (Curva de saturación)
+            let vBase = (tempVal > 35) ? ((tempVal - 35) * 3.2 / (105 - 35)) : 0;
+            
+            // Aplicamos el factor del combustible: El gas genera presión más rápido
+            let vSim = vBase * (factorPotencia * 0.8); // 0.8 es factor de eficiencia de quema
+            
+            // Limitador físico (Máximo 3.2V del ESP32)
+            vSim = vSim > 3.2 ? 3.2 : vSim;
+            
+            document.getElementById('voltaje_gen').value = vSim.toFixed(2);
             procesarCalculos();
         }
-    } catch (e) {
-        console.error("Falla en telemetría Cloud:", e);
-    }
+    } catch (e) { console.error("Error IoT:", e); }
 }
 
 function procesarCalculos() {
@@ -77,23 +86,22 @@ function procesarCalculos() {
     const voltaje_V = parseFloat(document.getElementById('voltaje_gen').value);
     const resistencia_R = parseFloat(document.getElementById('resistencia').value);
 
-    // Potencia Eléctrica Útil (P = V² / R)
-    const pElecW = resistencia_R > 0 ? (voltaje_V * voltaje_V) / resistencia_R : 0;
+    // 1. Potencia Térmica Real (Qin): Energía disponible en el combustible
+    const qInW = (masa_kg * PCI_DATA[combustible] * 1000000) / tiempo_s;
+
+    // 2. Potencia Eléctrica (P = V² / R)
+    const pElecW = (voltaje_V * voltaje_V) / resistencia_R;
     const pElecmW = pElecW * 1000;
 
-    // Potencia Térmica Base (Qin = (m * PCI) / t)
-    const qInW = tiempo_s > 0 ? (masa_kg * PCI_DATA[combustible] * 1000000) / tiempo_s : 0;
+    // 3. Eficiencia Global del Ciclo
+    const eficiencia = (pElecW / qInW) * 100;
 
-    // Eficiencia (%)
-    const eficiencia = qInW > 0 ? (pElecW / qInW) * 100 : 0;
-
-    // Actualizar SVG
+    // Actualizar Interfaz Gráfica
     document.getElementById('tag-temp').textContent = `${temp_C.toFixed(1)} °C`;
     document.getElementById('tag-qin').textContent = `Qin: ${Math.round(qInW)} W`;
     document.getElementById('tag-voltaje').textContent = `${voltaje_V.toFixed(2)} V`;
     document.getElementById('tag-potencia').textContent = `${pElecmW.toFixed(1)} mW`;
 
-    // Actualizar Resultados
     document.getElementById('res-elec').textContent = `${pElecmW.toFixed(2)} mW`;
     document.getElementById('res-termico').textContent = `${qInW.toFixed(1)} W`;
     document.getElementById('res-eficiencia').textContent = `${eficiencia.toFixed(6)} %`;
