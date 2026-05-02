@@ -29,51 +29,43 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-
         body { background-color: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden;}
-
         header { background: linear-gradient(90deg, #020617 0%, #0f172a 100%); padding: 1.5rem 2rem; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
-
         .brand-ast { font-weight: 800; font-size: 1.5rem; color: var(--accent); letter-spacing: 1px; }
         .project-title { color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
 
         main { display: grid; grid-template-columns: 350px 1fr 300px; gap: 1.5rem; padding: 1.5rem; flex: 1; }
-
         .panel { background-color: var(--bg-panel); border-radius: 8px; padding: 1.5rem; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); z-index: 10;}
         .panel-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #334155; color: var(--text-main); text-transform: uppercase; letter-spacing: 1px; }
 
         .form-group { margin-bottom: 1.2rem; }
         label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600; }
-        input[type="number"], input[type="text"], select { width: 100%; background-color: #0f172a; border: 1px solid #475569; color: var(--text-main); padding: 0.6rem; border-radius: 4px; font-size: 1rem; transition: border-color 0.2s; }
-        input[type="number"]:focus, input[type="text"]:focus, select:focus { outline: none; border-color: var(--accent); }
-
-        .btn-update { width: 100%; background-color: var(--bg-dark); color: var(--text-main); border: 1px solid var(--accent); padding: 1rem; border-radius: 4px; font-size: 1.1rem; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s; margin-top: 1rem; }
+        input[type="number"], select { width: 100%; background-color: #0f172a; border: 1px solid #475569; color: var(--text-main); padding: 0.6rem; border-radius: 4px; font-size: 1rem; }
+        
+        .btn-update { width: 100%; background-color: var(--bg-dark); color: var(--text-main); border: 1px solid var(--accent); padding: 1rem; border-radius: 4px; font-size: 1.1rem; font-weight: 700; cursor: pointer; text-transform: uppercase; margin-top: 1rem; transition: 0.3s; }
         .btn-update:hover { background-color: var(--accent); color: white; }
         
-        .btn-wifi { width: 100%; background-color: var(--success); color: white; border: none; padding: 1rem; border-radius: 4px; font-size: 1rem; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s; margin-top: 0.5rem; }
+        .btn-wifi { width: 100%; background-color: var(--success); color: white; border: none; padding: 1rem; border-radius: 4px; font-size: 1rem; font-weight: 700; cursor: pointer; text-transform: uppercase; margin-top: 0.5rem; transition: 0.3s; }
         .btn-wifi:hover { background-color: #059669; }
 
-        .diagram-container { display: flex; align-items: center; justify-content: center; background-color: #020617; border-radius: 8px; position: relative; overflow: hidden; border: 1px solid #334155; padding: 0;}
-        svg { width: 100%; height: auto; max-height: 750px; background-color: #020617;}
+        .diagram-container { display: flex; align-items: center; justify-content: center; background-color: #020617; border-radius: 8px; overflow: hidden; border: 1px solid #334155; }
+        svg { width: 100%; height: auto; max-height: 750px; }
         
         .component { stroke-width: 2.5; fill: #1e293b; stroke: #475569; }
-        .component-text { font-size: 14px; font-weight: bold; fill: #f8fafc; font-family: sans-serif; }
-        .data-tag { font-size: 13px; fill: var(--success); font-weight: bold; font-family: monospace; background: #000;}
+        .component-text { font-size: 14px; font-weight: bold; fill: #f8fafc; }
+        .data-tag { font-size: 13px; fill: var(--success); font-weight: bold; font-family: monospace; }
         
-        .flow-line { fill: none; stroke-dasharray: 12 8; stroke-dashoffset: 0; animation: flowConstant 0.8s linear infinite; }
+        .flow-line { fill: none; stroke-dasharray: 12 8; animation: flowConstant 0.8s linear infinite; }
         @keyframes flowConstant { to { stroke-dashoffset: -40; } }
 
         .pipe-steam { stroke: var(--pipe-steam); stroke-width: 8; }
         .wire-power { stroke: var(--warning); stroke-width: 3; }
         
-        @keyframes flameWobble { 0%, 100% { transform: scaleY(1) translateY(0); } 50% { transform: scaleY(1.1) translateY(-4px); } }
+        @keyframes flameWobble { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.1) translateY(-4px); } }
         .flame-anim { animation: flameWobble 0.5s ease-in-out infinite; transform-origin: bottom; }
 
         @keyframes rotateTurbine { to { transform: rotate(360deg); } }
         .turbine-blades { animation: rotateTurbine 0.5s linear infinite; transform-origin: 550px 200px; }
-
-        @keyframes ledGlow { 0%, 100% { fill: #ef4444; filter: drop-shadow(0 0 10px #ef4444); } 50% { fill: #991b1b; filter: drop-shadow(0 0 2px #991b1b); } }
-        .led-active { animation: ledGlow 0.5s ease-in-out infinite; }
 
         .result-box { background-color: #0f172a; border: 1px solid #334155; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
         .result-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.3rem; }
@@ -104,14 +96,14 @@
             <div class="panel-title">Telemetría Cloud</div>
             <form id="sim-form">
                 <div class="form-group" style="background: #020617; padding: 15px; border-radius: 5px; border: 1px solid #3b82f6;">
-                    <label style="color: #3b82f6;">Enlace de Adquisición</label>
+                    <label style="color: #3b82f6; text-align: center; display: block;">Enlace de Adquisición Global</label>
                     <button type="button" class="btn-wifi" id="btn-conectar-iot">ENLAZAR SENSOR EN VIVO</button>
                 </div>
                 
                 <hr style="border-color: #334155; margin: 20px 0;">
 
                 <div class="form-group">
-                    <label>Fuente Térmica (Combustible)</label>
+                    <label>Fuente Térmica</label>
                     <select id="tipo_combustible">
                         <option value="biomasa">Biomasa Pellet (17 MJ/kg)</option>
                         <option value="gas">Gas Natural (50 MJ/kg)</option>
@@ -119,23 +111,23 @@
                 </div>
                 <div class="form-group">
                     <label>Masa Quemada (Gramos)</label>
-                    <input type="number" id="masa_fuel" value="250" step="10">
+                    <input type="number" id="masa_fuel" value="250">
                 </div>
                 <div class="form-group">
                     <label>Tiempo de Prueba (Segundos)</label>
-                    <input type="number" id="tiempo_prueba" value="60" step="10">
+                    <input type="number" id="tiempo_prueba" value="60">
                 </div>
                 <div class="form-group">
                     <label>Temperatura Sensor (°C)</label>
-                    <input type="number" id="temp_vapor" value="0" step="0.1" readonly style="background: #1e293b; color: #10b981; font-weight: bold;">
+                    <input type="number" id="temp_vapor" value="0" readonly style="color: var(--success); font-weight: bold;">
                 </div>
                 <div class="form-group">
                     <label>Voltaje Generado (V)</label>
-                    <input type="number" id="voltaje_gen" value="0.0" step="0.1" readonly>
+                    <input type="number" id="voltaje_gen" value="0.0" readonly>
                 </div>
                 <div class="form-group">
-                    <label>Resistencia Carga (Ohmios)</label>
-                    <input type="number" id="resistencia" value="330" step="10">
+                    <label>Resistencia Carga (Ω)</label>
+                    <input type="number" id="resistencia" value="330">
                 </div>
 
                 <button type="button" class="btn-update" id="btn-update">FORZAR CÁLCULO</button>
@@ -152,23 +144,12 @@
                 <text x="160" y="490" text-anchor="middle" class="data-tag" style="fill: #ef4444;" id="tag-qin">Qin: 0 W</text>
 
                 <rect x="70" y="250" width="180" height="180" class="component" rx="25" />
-                <path d="M 50 250 L 270 250" stroke="#94a3b8" stroke-width="12" stroke-linecap="round"/>
-                <rect x="150" y="210" width="20" height="40" fill="#1e293b" />
                 <text x="160" y="340" text-anchor="middle" class="component-text">CALDERA</text>
                 
-                <rect x="250" y="290" width="30" height="20" fill="#b45309" />
                 <path class="flow-line pipe-steam" d="M 280 300 L 450 300 L 450 200 L 520 200" />
-                <text x="360" y="285" text-anchor="middle" class="data-tag" style="fill: #cbd5e1;">VAPOR ALTA PRESIÓN</text>
-
-                <rect x="360" y="220" width="50" height="40" fill="#1d4ed8" rx="4" />
-                <text x="385" y="245" text-anchor="middle" class="component-text" style="font-size: 11px;">DS18B20</text>
-                
-                <path d="M 360 250 L 320 300" stroke="#fbbf24" stroke-width="3" fill="none" />
-                <circle cx="320" cy="300" r="5" fill="#fbbf24" />
+                <rect x="360" y="220" width="60" height="40" fill="#1d4ed8" rx="4" />
+                <text x="390" y="245" text-anchor="middle" class="component-text" style="font-size: 11px;">DS18B20</text>
                 <text x="340" y="325" text-anchor="middle" class="data-tag" id="tag-temp">0.0 °C</text>
-
-                <path class="flow-line" d="M 385 260 L 385 530 L 630 530" stroke="var(--wire-data)" stroke-width="2" />
-                <path class="flow-line" d="M 395 260 L 395 540 L 630 540" stroke="var(--wire-sig)" stroke-width="2" />
 
                 <rect x="550" y="160" width="80" height="80" fill="#64748b" rx="10" />
                 <g class="turbine-blades">
@@ -179,16 +160,8 @@
                 <text x="590" y="150" text-anchor="middle" class="component-text">TURBINA DC</text>
 
                 <path class="flow-line wire-power" d="M 660 190 L 800 190 L 800 480" />
-                <path d="M 660 210 L 820 210 L 820 480" stroke="var(--wire-blk)" stroke-width="3" fill="none" />
-
-                <rect x="550" y="480" width="400" height="180" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" rx="10" />
-                <path d="M 560 495 L 940 495" stroke="#ef4444" stroke-width="3" />
-                <path d="M 560 510 L 940 510" stroke="#3b82f6" stroke-width="3" />
-                
                 <rect x="630" y="530" width="120" height="60" fill="#0f172a" rx="5" />
-                <text x="710" y="565" text-anchor="middle" class="component-text" style="font-size: 12px;">ESP32 IoT</text>
-
-                <circle cx="850" cy="555" r="15" class="led-active" />
+                <text x="690" y="565" text-anchor="middle" class="component-text" style="font-size: 12px;">ESP32 IoT</text>
                 
                 <text x="850" y="520" text-anchor="middle" class="data-tag" style="fill: var(--warning);" id="tag-voltaje">0.00 V</text>
                 <text x="850" y="605" text-anchor="middle" class="data-tag" style="fill: var(--success);" id="tag-potencia">0 mW</text>
@@ -213,12 +186,9 @@
     </main>
 
     <script>
-        // Registro de Service Worker para PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker Registrado'))
-                .catch(err => console.error('Error al registrar SW', err));
+                navigator.serviceWorker.register('sw.js').catch(err => console.error(err));
             });
         }
     </script>
