@@ -7,6 +7,13 @@ import android.graphics.Canvas
 import android.os.SystemClock
 import androidx.exifinterface.media.ExifInterface
 import co.ast.campo.core.ExifDates
+import co.ast.campo.core.TemperatureCachePolicy
+import co.ast.campo.core.awaitBounded
+import co.ast.campo.weather.TempSource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import co.ast.campo.core.FolderTree
 import co.ast.campo.core.MediaPaths
 import co.ast.campo.core.NameSanitizer
@@ -68,11 +75,25 @@ class PhotoProcessor(
     // Una foto a la vez: acota la memoria (un bitmap de 50 MP pesa ~200 MB) y hace determinista el consecutivo NNN.
     private val mutex = Mutex()
 
+    // Las consultas de red corren aparte: si tardan, la foto se guarda igual (sin ese dato) en vez de quedarse "cargando".
+    private val lookupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     suspend fun process(p: PendingCapture): ProcessedPhoto {
         // Lo lento y dependiente de la red va FUERA del candado para no bloquear a las demás fotos.
         val fix = resolveLocation(p)
-        val temp = temperature.resolve(fix?.lat, fix?.lon, p.manualTemperature)
-        val place = if (settings.settings.value.watermark.showPlace) places.resolve(fix?.lat, fix?.lon) else null
+        val wantPlace = settings.settings.value.watermark.showPlace
+        val (temp, place) = coroutineScope {
+            // Temperatura y lugar se piden a la vez; cada uno espera como máximo 5 s. Casi siempre ya están en caché
+            // porque la pantalla de captura los precarga mientras apuntas la cámara.
+            val t = async {
+                awaitBounded(lookupScope, LOOKUP_TIMEOUT_MS) { temperature.resolve(fix?.lat, fix?.lon, p.manualTemperature) }
+                    ?: fallbackTemperature(fix)
+            }
+            val pl = async {
+                if (wantPlace) awaitBounded(lookupScope, LOOKUP_TIMEOUT_MS) { places.resolve(fix?.lat, fix?.lon) } else null
+            }
+            t.await() to pl.await()
+        }
         return mutex.withLock { withContext(Dispatchers.Default) { processLocked(p, fix, temp, place) } }
     }
 
@@ -195,6 +216,12 @@ class PhotoProcessor(
         return best ?: tracker.currentOnce()
     }
 
+    /** Si la consulta de temperatura no llegó a tiempo: la última guardada si es reciente y cercana, o sin dato. */
+    private fun fallbackTemperature(fix: LocationFix?): TempResult {
+        val cached = TemperatureCachePolicy.usable(settings.load(), fix?.lat, fix?.lon, System.currentTimeMillis())
+        return if (cached != null) TempResult(cached.celsius, TempSource.CACHE) else TempResult(null, TempSource.NONE)
+    }
+
     private fun takenAtMillis(exif: ExifInterface, file: File, launchedAt: Long, zone: ZoneId): Long {
         val fromExif = ExifDates.parse(
             exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL), exif.getAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL), zone,
@@ -235,6 +262,7 @@ class PhotoProcessor(
 
     companion object {
         const val JPEG_QUALITY = 95
+        const val LOOKUP_TIMEOUT_MS = 5_000L
         private const val DAY_MS = 24 * 60 * 60 * 1000L
 
         /** Datos técnicos de la cámara que se conservan al recomprimir. */

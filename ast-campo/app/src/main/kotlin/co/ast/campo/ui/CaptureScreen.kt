@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -30,6 +31,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.GpsFixed
@@ -39,6 +41,7 @@ import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -178,11 +181,11 @@ fun CaptureScreen(vm: CaptureVM, onBack: () -> Unit, onOpenPhoto: (folderId: Lon
         snackbarHost = { SnackbarHost(snack) },
         bottomBar = {
             Surface(color = MaterialTheme.colorScheme.background) {
-                BigButton(
-                    "TOMAR FOTO", Icons.Filled.CameraAlt, ::takePhoto,
-                    Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp),
-                    height = 96.dp,
-                )
+                Column(Modifier.navigationBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    SaveStatus(processing, sessionCount)
+                    Spacer(Modifier.height(8.dp))
+                    BigButton("TOMAR FOTO", Icons.Filled.CameraAlt, ::takePhoto, Modifier.fillMaxWidth(), height = 96.dp)
+                }
             }
         },
     ) { padding ->
@@ -305,6 +308,31 @@ fun CaptureScreen(vm: CaptureVM, onBack: () -> Unit, onOpenPhoto: (folderId: Lon
             confirmLabel = "Eliminar", destructive = true,
             onConfirm = { confirmUndo = false; vm.undoLast() }, onDismiss = { confirmUndo = false },
         )
+    }
+}
+
+/** Estado de guardado siempre visible junto al botón: se sabe si hay fotos guardándose y que se puede seguir disparando. */
+@Composable
+private fun SaveStatus(processing: Int, sessionCount: Int) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 28.dp)) {
+        if (processing > 0) {
+            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.secondary)
+            Spacer(Modifier.width(10.dp))
+            Text(
+                if (processing == 1) "Guardando la foto… puedes tomar otra, se guarda sola"
+                else "Guardando $processing fotos… puedes seguir tomando, se guardan solas",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary,
+            )
+        } else if (sessionCount > 0) {
+            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(10.dp))
+            Text(
+                "Todo guardado · ${fotosLabel(sessionCount)} en esta sesión",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary,
+            )
+        } else {
+            Text("Lista para tomar la primera foto", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 

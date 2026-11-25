@@ -8,6 +8,7 @@ import co.ast.campo.AstApp
 import co.ast.campo.core.FolderNode
 import co.ast.campo.core.FolderStats
 import co.ast.campo.core.FolderTree
+import co.ast.campo.core.MediaPaths
 import co.ast.campo.core.NameSanitizer
 import co.ast.campo.data.MoveReport
 import co.ast.campo.data.PhotoEntity
@@ -175,7 +176,7 @@ class CaptureVM(app: AstApp, private val handle: SavedStateHandle, initialFolder
                     is CaptureEvent.Saved -> {
                         _sessionCount.value += 1
                         _lastPhoto.value = e.photo
-                        savedWarning(e)?.let(::toast)
+                        toast(savedWarning(e) ?: "Foto guardada: n.º ${MediaPaths.sequenceOf(e.photo.displayName) ?: ""}".trimEnd())
                     }
                     is CaptureEvent.Failed -> toast("No se pudo guardar la foto: ${e.message}")
                 }
@@ -211,6 +212,8 @@ class CaptureVM(app: AstApp, private val handle: SavedStateHandle, initialFolder
         _manualTemp.value = app.settings.manualTemperature() // la temperatura a mano caduca a las 3 h
         val f = app.tracker.fix.value
         _temp.value = app.temperature.resolve(f?.lat, f?.lon, _manualTemp.value)
+        // Precarga el nombre del lugar para que, al volver de la cámara, la foto se guarde sin esperar a internet.
+        if (f != null && settings.value.watermark.showPlace) app.places.resolve(f.lat, f.lon)
     }
 
     /** Mantiene al día la temperatura del chip mientras la pantalla está visible (se cancela al salir). */

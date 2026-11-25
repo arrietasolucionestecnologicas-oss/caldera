@@ -24,7 +24,7 @@ fun interface HttpGet {
     suspend fun get(url: String): String
 }
 
-class UrlConnectionGet(private val timeoutMs: Int = 6_000) : HttpGet {
+class UrlConnectionGet(private val timeoutMs: Int = 4_000) : HttpGet {
     override suspend fun get(url: String): String = withContext(Dispatchers.IO) {
         val conn = URL(url).openConnection() as HttpURLConnection
         try {

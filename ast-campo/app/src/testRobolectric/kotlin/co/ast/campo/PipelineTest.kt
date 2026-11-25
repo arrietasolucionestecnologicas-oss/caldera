@@ -301,6 +301,29 @@ class PipelineTest {
         repo.movePhoto(c.id, other)
         assertEquals("Proyecto Y_002.jpg", db.photos().get(c.id)!!.displayName)
     }
+    @Test fun slowInternetNeverBlocksSavingThePhoto() = runBlocking {
+        val folder = makeFolders()
+        // Internet "colgado": la temperatura y el lugar tardarían 15 s en responder.
+        val slowWeather = object : co.ast.campo.weather.WeatherProvider {
+            override val id = "slow"
+            override val displayName = "slow"
+            override suspend fun currentTemperature(lat: Double, lon: Double): Double { Thread.sleep(15_000); return 30.0 }
+        }
+        val slowPlace = object : co.ast.campo.place.PlaceProvider {
+            override suspend fun nameFor(lat: Double, lon: Double): String? { Thread.sleep(15_000); return "Tarde" }
+        }
+        val proc = PhotoProcessor(
+            app, db, gallery, settings, FakeLocation(fix()),
+            TemperatureResolver({ slowWeather }, settings), co.ast.campo.place.PlaceResolver({ slowPlace }, settings),
+        )
+        val start = System.nanoTime()
+        val r = proc.process(pending(cameraJpeg(), folder, manualTemp = null))
+        val seconds = (System.nanoTime() - start) / 1e9
+        assertTrue("tardó $seconds s", seconds < 9.0)
+        assertNull(r.photo.place)
+        assertEquals(TempSource.NONE, r.temperature.source)
+        assertEquals(1, gallery.items.size) // la foto sí quedó guardada
+    }
 }
 
 private object FakePlaceProvider : co.ast.campo.place.PlaceProvider {
