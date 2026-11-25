@@ -9,7 +9,7 @@ Sin anuncios, sin cuentas, sin analítica, sin servidor propio. Las fotos nunca 
 ## Instalar en el celular
 
 1. En el celular abre este enlace en Chrome y descarga el APK:
-   `https://raw.githubusercontent.com/arrietasolucionestecnologicas-oss/caldera/main/releases/AST-Campo-v1.3.1.apk`
+   `https://raw.githubusercontent.com/arrietasolucionestecnologicas-oss/caldera/main/releases/AST-Campo-v1.3.2.apk`
 2. Al abrir el archivo Android pedirá permiso para instalar apps desconocidas desde el navegador: acepta en **Ajustes > Permitir de esta fuente**.
 3. Instala y abre **AST Campo**. Concede el permiso de **ubicación** (mientras usas la app).
 
@@ -17,7 +17,7 @@ Si Play Protect avisa de "app no verificada" es normal: el APK está firmado con
 
 ## Actualizar
 
-Descarga el APK de la versión nueva (compatible con las anteriores: conserva tus proyectos; las fotos viejas conservan su nombre con fecha, salvo que muevas o renombres su carpeta, y no tienen línea de lugar) (`releases/AST-Campo-vX.Y.Z.apk`) y ábrelo: se instala **encima** de la anterior y conserva proyectos y fotos. Esto solo funciona porque todas las versiones se firman con el mismo keystore (ver abajo). Para comprobar que el archivo no se dañó, compara su SHA-256 con `releases/AST-Campo-v1.3.1.apk.sha256`.
+Descarga el APK de la versión nueva (compatible con las anteriores: conserva tus proyectos; las fotos viejas conservan su nombre con fecha, salvo que muevas o renombres su carpeta, y no tienen línea de lugar) (`releases/AST-Campo-vX.Y.Z.apk`) y ábrelo: se instala **encima** de la anterior y conserva proyectos y fotos. Esto solo funciona porque todas las versiones se firman con el mismo keystore (ver abajo). Para comprobar que el archivo no se dañó, compara su SHA-256 con `releases/AST-Campo-v1.3.2.apk.sha256`.
 
 ## Qué hace
 
@@ -77,7 +77,7 @@ Requisitos: JDK 17+ (se probó con 21) y Android SDK con plataforma 37.2 y build
 
 ## Cambiar el logo
 
-El logo actual es **provisional**. Reemplaza el único recurso `ast-campo/app/src/main/res/drawable/ast_logo.xml` (vector de 108 x 108 dp con el contenido dentro del círculo central de 66 dp, o un `ast_logo.png` de 432 x 432 px). Se usa como ícono de la app y en la barra de Proyectos. Los colores propuestos están en `ui/Theme.kt` (`AstColors`); no son un Brand Kit oficial.
+El ícono actual es una **cámara con el rayo de A.S.T. en el lente** (hecho por código, no es el logo oficial). Reemplaza el único recurso `ast-campo/app/src/main/res/drawable/ast_logo.xml` (vector de 108 x 108 dp con el contenido dentro del círculo central de 66 dp, o un `ast_logo.png` de 432 x 432 px). Se usa como ícono de la app (sobre fondo azul marino) y en la barra de Proyectos. Los colores propuestos están en `ui/Theme.kt` (`AstColors`); no son un Brand Kit oficial.
 
 ## Vistas previas de diseño
 
