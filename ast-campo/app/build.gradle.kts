@@ -11,6 +11,10 @@ val keystorePassword: String? =
         ?: (findProperty("astKeystorePassword") as String?)?.takeIf { it.isNotBlank() }
 val keystoreFile = rootProject.file("keystore/ast-campo.p12")
 
+// Pruebas con Robolectric (renderizado real de la marca, base de datos, arranque de la UI en la JVM).
+// Se activan con  -PwithRobolectric  (en GitHub Actions); descargan el SDK de Android en tiempo de prueba.
+val withRobolectric = providers.gradleProperty("withRobolectric").isPresent
+
 android {
     namespace = "co.ast.campo"
     compileSdk {
@@ -60,10 +64,19 @@ android {
         abortOnError = true
         warningsAsErrors = false
         checkReleaseBuilds = true
+        // UseKtx es solo de estilo (sugiere extensiones KTX para APIs que ya se usan bien).
+        disable += "UseKtx"
     }
 
     testOptions {
-        unitTests.isReturnDefaultValues = true
+        unitTests {
+            isReturnDefaultValues = true
+            isIncludeAndroidResources = true // Robolectric: recursos y manifiesto reales
+        }
+    }
+
+    sourceSets {
+        if (withRobolectric) getByName("test").kotlin.directories.add("src/testRobolectric/kotlin")
     }
 
     packaging {
@@ -101,4 +114,13 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.org.json)
     testImplementation(libs.kotlinx.coroutines.test)
+
+    if (withRobolectric) {
+        testImplementation(libs.robolectric)
+        testImplementation(libs.androidx.test.core)
+        testImplementation(libs.androidx.test.ext.junit)
+        testImplementation(platform(libs.androidx.compose.bom))
+        testImplementation(libs.androidx.compose.ui.test.junit4)
+        debugImplementation(libs.androidx.compose.ui.test.manifest)
+    }
 }

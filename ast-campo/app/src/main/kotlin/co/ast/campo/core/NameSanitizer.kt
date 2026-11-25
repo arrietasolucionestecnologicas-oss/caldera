@@ -31,6 +31,12 @@ object NameSanitizer {
     fun key(name: String): String =
         Normalizer.normalize(name, Normalizer.Form.NFC).lowercase(Locale.ROOT)
 
+    private val combiningMarks = Regex("\\p{Mn}+")
+
+    /** Clave de búsqueda: sin tildes ni mayúsculas ("Subestación" coincide con "subestacion"). */
+    fun searchKey(text: String): String =
+        combiningMarks.replace(Normalizer.normalize(text, Normalizer.Form.NFD), "").lowercase(Locale.ROOT)
+
     /** Indica si [candidate] ya existe entre [siblings] (sin distinguir mayúsculas). */
     fun isDuplicate(candidate: String, siblings: Collection<String>): Boolean {
         val k = key(candidate)

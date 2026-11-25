@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Capturas temporales que llena la cámara, y copias originales sin marca (visor / compartir). -->
+    <cache-path name="captures" path="captures/" />
+    <external-files-path name="originales" path="originales/" />
+</paths>

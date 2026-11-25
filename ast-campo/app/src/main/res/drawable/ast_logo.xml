@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LOGO PROVISIONAL (escudo con circuito y rayo). ÚNICO recurso del logo: reemplaza este archivo
+  (vector de 108 x 108 dp con el contenido dentro del círculo central de 66 dp) o un ast_logo.png
+  de 432 x 432 px con fondo transparente. Se usa como ícono de la app y en la barra de Proyectos.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#1A3A66"
+        android:strokeColor="#2BD4F0"
+        android:strokeWidth="2.4"
+        android:pathData="M54,22 L79,31 L79,55 C79,69 68,79 54,86 C40,79 29,69 29,55 L29,31 Z" />
+    <path
+        android:strokeColor="#2BD4F0"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:pathData="M36,40 L36,52 M72,40 L72,52 M36,52 L42,58 M72,52 L66,58" />
+    <path
+        android:fillColor="#F58220"
+        android:pathData="M58,32 L43,56 L52,56 L48,76 L65,49 L56,49 Z" />
+</vector>

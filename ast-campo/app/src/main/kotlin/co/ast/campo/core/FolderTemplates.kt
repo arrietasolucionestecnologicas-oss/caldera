@@ -1,7 +1,5 @@
 package co.ast.campo.core
 
-import java.text.Normalizer
-
 object FolderTemplates {
     val DEFAULT_SUBSTATION_CHILDREN = listOf(
         "Transformadores", "Tableros", "Generadores", "Banco de condensadores",
@@ -16,11 +14,8 @@ object FolderTemplates {
 
     private val numbered = Regex("^(.*?)(\\d+)$")
 
-    private fun fold(s: String): String =
-        Normalizer.normalize(s, Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "").lowercase()
-
     /** ¿El nombre es de tipo "Subestación ..." (sin importar tildes ni mayúsculas)? */
-    fun isSubstationName(name: String): Boolean = fold(name.trim()).startsWith("subestacion")
+    fun isSubstationName(name: String): Boolean = NameSanitizer.searchKey(name.trim()).startsWith("subestacion")
 
     /** Limpia y descarta duplicados de una lista editable de subcarpetas de plantilla. */
     fun cleanTemplate(items: List<String>): List<String> {

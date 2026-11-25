@@ -1,0 +1,64 @@
+name: Compilar APK de AST Campo
+
+# Respaldo para compilar el APK sin depender de la sesión de desarrollo.
+# Para firmar con la clave de A.S.T. crea en Settings > Secrets and variables > Actions el secreto
+# AST_KEYSTORE_PASSWORD (la contraseña del keystore ast-campo/keystore/ast-campo.p12).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, "ccr-**"]
+    paths: ["ast-campo/**", ".github/workflows/build-apk.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: ast-campo
+    env:
+      AST_KEYSTORE_PASSWORD: ${{ secrets.AST_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Aceptar licencias del SDK de Android
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Pruebas unitarias, pruebas con Robolectric y lint
+        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug -PwithRobolectric
+
+      - name: Subir reportes de pruebas e imágenes de revisión
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes
+          path: |
+            ast-campo/app/build/test-artifacts/
+            ast-campo/app/build/reports/tests/
+            ast-campo/app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+
+      - name: Compilar APK firmado
+        if: ${{ env.AST_KEYSTORE_PASSWORD != '' }}
+        run: ./gradlew --no-daemon :app:assembleRelease
+
+      - name: Avisar si falta la firma
+        if: ${{ env.AST_KEYSTORE_PASSWORD == '' }}
+        run: echo "::warning::Falta el secreto AST_KEYSTORE_PASSWORD: no se generó el APK firmado."
+
+      - name: Subir APK
+        if: ${{ env.AST_KEYSTORE_PASSWORD != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: AST-Campo-apk
+          path: ast-campo/app/build/outputs/apk/release/*.apk

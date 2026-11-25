@@ -6,16 +6,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.roundToInt
 
-/** Texto de la marca de agua (3 líneas cortas + texto opcional de empresa). */
-data class WatermarkText(
-    val route: String?,
-    val dateTime: String?,
-    val data: String?,
-    val company: String?,
-) {
-    val isEmpty: Boolean get() = route == null && dateTime == null && data == null && company == null
-}
-
 object WatermarkFormatter {
     const val PATH_SEPARATOR = " › "
     private const val ELLIPSIS = "…"

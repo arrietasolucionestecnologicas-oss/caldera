@@ -54,4 +54,9 @@ class NameSanitizerTest {
         // Las tildes sí distinguen: "Subestacion" y "Subestación" son nombres distintos.
         assertFalse(NameSanitizer.isDuplicate("Subestacion 1", listOf("Subestación 1")))
     }
+
+    @Test fun searchKeyIgnoresAccentsAndCase() {
+        assertEquals("subestacion norte", NameSanitizer.searchKey("Subestación NORTE"))
+        assertEquals("ano", NameSanitizer.searchKey("Año"))
+    }
 }
