@@ -54,7 +54,8 @@ jobs:
 
       - name: Avisar si falta la firma
         if: ${{ env.AST_KEYSTORE_PASSWORD == '' }}
-        run: echo "::warning::Falta el secreto AST_KEYSTORE_PASSWORD: no se generó el APK firmado."
+        run: |
+          echo "::warning::Falta el secreto AST_KEYSTORE_PASSWORD, no se generó el APK firmado."
 
       - name: Subir APK
         if: ${{ env.AST_KEYSTORE_PASSWORD != '' }}
