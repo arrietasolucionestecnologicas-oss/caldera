@@ -15,6 +15,7 @@ import co.ast.campo.data.AstDatabase
 import co.ast.campo.data.PhotoEntity
 import co.ast.campo.data.SettingsRepository
 import co.ast.campo.data.WatermarkSettings
+import co.ast.campo.place.PlaceResolver
 import co.ast.campo.weather.TempResult
 import co.ast.campo.weather.TemperatureResolver
 import kotlinx.coroutines.CancellationException
@@ -64,6 +65,7 @@ class PhotoProcessor(
     private val settings: SettingsRepository,
     private val tracker: LocationSource,
     private val temperature: TemperatureResolver,
+    private val places: PlaceResolver,
 ) {
     // Una foto a la vez: acota la memoria (un bitmap de 50 MP pesa ~200 MB) y hace determinista el consecutivo NNN.
     private val mutex = Mutex()
@@ -72,10 +74,11 @@ class PhotoProcessor(
         // Lo lento y dependiente de la red va FUERA del candado para no bloquear a las demás fotos.
         val fix = resolveLocation(p)
         val temp = temperature.resolve(fix?.lat, fix?.lon, p.manualTemperature)
-        return mutex.withLock { withContext(Dispatchers.Default) { processLocked(p, fix, temp) } }
+        val place = if (settings.settings.value.watermark.showPlace) places.resolve(fix?.lat, fix?.lon) else null
+        return mutex.withLock { withContext(Dispatchers.Default) { processLocked(p, fix, temp, place) } }
     }
 
-    private suspend fun processLocked(p: PendingCapture, fix: LocationFix?, temp: TempResult): ProcessedPhoto {
+    private suspend fun processLocked(p: PendingCapture, fix: LocationFix?, temp: TempResult, place: String?): ProcessedPhoto {
         val src = File(p.filePath)
         if (!src.exists() || src.length() == 0L) throw IOException("La cámara no devolvió la foto")
 
@@ -96,7 +99,7 @@ class PhotoProcessor(
         val day = Instant.ofEpochMilli(takenAt).atZone(zone).toLocalDate()
         val seq = db.photos().countInRange(p.folderId, startOfDay(day, zone), startOfDay(day.plusDays(1), zone)) + 1
         val fileName = MediaPaths.fileName(segments, takenAt, zone, seq)
-        val content = buildContent(s.watermark, segments, takenAt, zone, fix, temp.celsius, s.watermark.company)
+        val content = buildContent(s.watermark, segments, takenAt, zone, fix?.lat, fix?.lon, temp.celsius, s.watermark.company, place)
 
         // 1) Marca de agua. Si algo falla (p. ej. memoria) se guarda la foto sin marca antes que perderla.
         val marked = File(context.cacheDir, "captures/out_${SystemClock.elapsedRealtimeNanos()}.jpg")
@@ -141,7 +144,7 @@ class PhotoProcessor(
             folderId = p.folderId, mediaUri = uri.toString(), displayName = fileName, takenAt = takenAt,
             latitude = fix?.lat, longitude = fix?.lon, accuracyM = fix?.accuracyM?.takeIf { it < Float.MAX_VALUE },
             temperatureC = temp.celsius, temperatureSource = temp.source.name, originalPath = originalPath,
-            width = outW, height = outH, sizeBytes = outFile.length(),
+            width = outW, height = outH, sizeBytes = outFile.length(), place = place,
         )
         val id = db.photos().insert(entity)
         PendingStore.sidecar(src).delete() // ya no hay nada que recuperar
@@ -253,17 +256,13 @@ class PhotoProcessor(
 
         fun buildContent(
             style: WatermarkSettings, segments: List<String>, takenAt: Long, zone: ZoneId,
-            fix: LocationFix?, celsius: Double?, company: String,
-        ) = buildContent(style, segments, takenAt, zone, fix?.lat, fix?.lon, celsius, company)
-
-        fun buildContent(
-            style: WatermarkSettings, segments: List<String>, takenAt: Long, zone: ZoneId,
-            lat: Double?, lon: Double?, celsius: Double?, company: String,
+            lat: Double?, lon: Double?, celsius: Double?, company: String, place: String? = null,
         ) = WatermarkContent(
             routeSegments = if (style.showRoute) segments else emptyList(),
             dateTime = if (style.showDateTime) WatermarkFormatter.dateTime(takenAt, zone) else null,
             data = WatermarkFormatter.dataLine(lat, lon, celsius, style.showCoords, style.showTemp),
             company = company.trim().ifEmpty { null },
+            place = if (style.showPlace) place?.trim()?.ifEmpty { null } else null,
         )
     }
 }

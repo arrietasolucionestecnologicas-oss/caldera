@@ -63,14 +63,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
 import co.ast.campo.core.FolderTree
 import co.ast.campo.core.WatermarkFormatter
 import co.ast.campo.data.PhotoEntity
@@ -228,6 +225,7 @@ private fun DetailsContent(p: PhotoEntity, tree: FolderTree?) {
             } else "Sin coordenadas",
             highlight = p.latitude != null,
         )
+        p.place?.let { DetailRow("Lugar", it) }
         DetailRow("Temperatura", (p.temperatureC?.let { WatermarkFormatter.temperature(it) } ?: "--") + "  ($tempSource)")
         DetailRow("Resolución", "${p.width} × ${p.height}  (${"%.1f".format(SpanishCo, p.width * p.height / 1_000_000.0)} MP)")
         DetailRow("Tamaño", "%.1f MB".format(SpanishCo, p.sizeBytes / 1_048_576.0))
@@ -247,8 +245,7 @@ private fun DetailRow(label: String, value: String, highlight: Boolean = false) 
 
 /** Imagen con zoom por pellizco y doble toque. Con zoom 1x deja pasar el gesto al pager para cambiar de foto. */
 @Composable
-private fun ZoomableImage(model: Any?, description: String?, onZoomChange: (Boolean) -> Unit) {
-    val ctx = LocalContext.current
+private fun ZoomableImage(model: Any, description: String?, onZoomChange: (Boolean) -> Unit) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var size by remember { mutableStateOf(IntSize.Zero) }
@@ -284,10 +281,8 @@ private fun ZoomableImage(model: Any?, description: String?, onZoomChange: (Bool
                 }
             },
     ) {
-        AsyncImage(
-            model = ImageRequest.Builder(ctx).data(model).size(4096).build(),
-            contentDescription = description,
-            contentScale = ContentScale.Fit,
+        MediaImage(
+            model = model, description = description,
             modifier = Modifier.fillMaxSize().graphicsLayer(scaleX = scale, scaleY = scale, translationX = offset.x, translationY = offset.y),
         )
     }

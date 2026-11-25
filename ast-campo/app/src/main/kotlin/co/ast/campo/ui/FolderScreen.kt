@@ -2,7 +2,6 @@
 
 package co.ast.campo.ui
 
-import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -54,13 +53,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
 import co.ast.campo.core.FolderNode
 import co.ast.campo.core.FolderStats
 import co.ast.campo.data.PhotoEntity
@@ -278,11 +273,8 @@ private fun SubfolderRow(
 
 @Composable
 private fun PhotoTile(photo: PhotoEntity, onClick: () -> Unit) {
-    val ctx = LocalContext.current
-    AsyncImage(
-        model = ImageRequest.Builder(ctx).data(Uri.parse(photo.mediaUri)).size(360).build(),
-        contentDescription = photo.displayName,
-        contentScale = ContentScale.Crop,
+    MediaThumbnail(
+        uri = photo.mediaUri, sizePx = 360, description = photo.displayName,
         modifier = Modifier.aspectRatio(1f).clip(RoundedCornerShape(8.dp)).clickable(onClick = onClick),
     )
 }

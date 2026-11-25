@@ -77,14 +77,13 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import coil3.compose.AsyncImage
 import co.ast.campo.AstApp
 import co.ast.campo.core.WatermarkFormatter
 import co.ast.campo.weather.TempSource
 import kotlinx.coroutines.delay
 
 @Composable
-fun CaptureScreen(vm: CaptureVM, onBack: () -> Unit) {
+fun CaptureScreen(vm: CaptureVM, onBack: () -> Unit, onOpenPhoto: (folderId: Long, photoId: Long) -> Unit) {
     val ctx = LocalContext.current
     val app = ctx.applicationContext as AstApp
     val tree by vm.tree.collectAsStateWithLifecycle()
@@ -246,18 +245,18 @@ fun CaptureScreen(vm: CaptureVM, onBack: () -> Unit) {
                 Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     val p = lastPhoto
                     if (p != null) {
-                        AsyncImage(
-                            model = Uri.parse(p.mediaUri), contentDescription = "Última foto", contentScale = ContentScale.Crop,
-                            modifier = Modifier.size(72.dp).clip(RoundedCornerShape(10.dp)),
+                        MediaThumbnail(
+                            uri = p.mediaUri, sizePx = 320, description = "Última foto: toca para revisarla",
+                            modifier = Modifier.size(96.dp).clip(RoundedCornerShape(12.dp)).clickable { onOpenPhoto(p.folderId, p.id) },
                         )
                     } else {
-                        Box(Modifier.size(72.dp), contentAlignment = Alignment.Center) {
+                        Box(Modifier.size(96.dp), contentAlignment = Alignment.Center) {
                             Icon(Icons.Filled.CameraAlt, null, tint = MaterialTheme.colorScheme.outline)
                         }
                     }
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(if (p != null) "Última foto guardada" else "Aún no hay fotos en esta sesión", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                        Text(if (p != null) "Toca la foto para revisarla" else "Aún no hay fotos en esta sesión", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                         Text(
                             "Sesión: " + fotosLabel(sessionCount), color = MaterialTheme.colorScheme.secondary,
                             style = MaterialTheme.typography.titleMedium,

@@ -60,7 +60,7 @@ fun AstNavHost() {
         composable(Routes.CAPTURE, arguments = listOf(longArg("id"))) { entry ->
             val id = entry.arguments!!.getLong("id")
             val vm = viewModel(key = "capture$id") { CaptureVM(app, createSavedStateHandle(), id) }
-            CaptureScreen(vm, onBack = { nav.popBackStack() })
+            CaptureScreen(vm, onBack = { nav.popBackStack() }, onOpenPhoto = { folderId, photoId -> nav.navigate("viewer/$folderId/$photoId") })
         }
         composable(Routes.VIEWER, arguments = listOf(longArg("folderId"), longArg("photoId"))) { entry ->
             val folderId = entry.arguments!!.getLong("folderId")

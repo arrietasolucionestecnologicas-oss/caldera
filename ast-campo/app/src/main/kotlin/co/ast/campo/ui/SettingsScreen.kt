@@ -83,6 +83,10 @@ fun SettingsScreen(vm: SettingsVM, onBack: () -> Unit) {
             SwitchRow("Fecha y hora", "dd/MM/yyyy HH:mm", wm.showDateTime) { v -> setWm { it.copy(showDateTime = v) } }
             SwitchRow("Coordenadas", "6 decimales", wm.showCoords) { v -> setWm { it.copy(showCoords = v) } }
             SwitchRow("Temperatura", "De referencia de la zona", wm.showTemp) { v -> setWm { it.copy(showTemp = v) } }
+            SwitchRow(
+                "Lugar (nombre del sitio)", "Dirección o sitio aproximado según el servicio de ubicación de Google. Necesita internet y le envía las coordenadas a Google.",
+                wm.showPlace,
+            ) { v -> setWm { it.copy(showPlace = v) } }
 
             Text("Esquina", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -99,10 +103,10 @@ fun SettingsScreen(vm: SettingsVM, onBack: () -> Unit) {
 
             Text("Tamaño", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                listOf(WatermarkSize.SMALL to "Pequeño", WatermarkSize.MEDIUM to "Mediano").forEachIndexed { i, (size, label) ->
+                listOf(WatermarkSize.SMALL to "Pequeño", WatermarkSize.MEDIUM to "Mediano", WatermarkSize.LARGE to "Grande").forEachIndexed { i, (size, label) ->
                     SegmentedButton(
                         selected = wm.size == size, onClick = { setWm { it.copy(size = size) } },
-                        shape = SegmentedButtonDefaults.itemShape(i, 2), modifier = Modifier.heightIn(min = 48.dp),
+                        shape = SegmentedButtonDefaults.itemShape(i, 3), modifier = Modifier.heightIn(min = 48.dp),
                     ) { Text(label) }
                 }
             }
@@ -148,7 +152,8 @@ fun SettingsScreen(vm: SettingsVM, onBack: () -> Unit) {
             Text("AST Campo ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.titleMedium)
             Text(
                 "Sin anuncios, sin cuentas, sin analítica. Las fotos nunca salen del teléfono; solo se envían a internet las " +
-                    "coordenadas (redondeadas a ~1 km) para consultar la temperatura.",
+                    "coordenadas: redondeadas a ~1 km a Open-Meteo para la temperatura y, si activas \"Lugar\", exactas al " +
+                    "servicio de ubicación de Google para el nombre del sitio.",
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.size(24.dp))

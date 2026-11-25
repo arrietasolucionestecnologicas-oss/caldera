@@ -140,7 +140,8 @@ class AstRepository(
         val photos = photoDao.inFolders(listOf(folderId))
         if (photos.isEmpty()) return@withContext
         val alive = gallery.existing(photos.map { Uri.parse(it.mediaUri) })
-        val gone = photos.filter { Uri.parse(it.mediaUri) !in alive }
+        // Doble comprobación individual antes de olvidar una foto: borrar filas por error escondería fotos reales.
+        val gone = photos.filter { Uri.parse(it.mediaUri) !in alive && !gallery.exists(Uri.parse(it.mediaUri)) }
         if (gone.isNotEmpty()) photoDao.deleteAll(gone.map { it.id })
     }
 

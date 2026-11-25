@@ -73,8 +73,8 @@ class WatermarkRendererTest {
         assertEquals(margin, box.left.toFloat(), 2f)
         assertEquals(1500 - margin, box.bottom.toFloat(), 2f)
         // Pequeño: el bloque debe ocupar poco de la foto
-        assertTrue("ancho ${box.right - box.left}", box.right - box.left < 2000 * 0.5)
-        assertTrue("alto ${box.bottom - box.top}", box.bottom - box.top < 1500 * 0.12)
+        assertTrue("ancho ${box.right - box.left}", box.right - box.left < 2000 * 0.6)
+        assertTrue("alto ${box.bottom - box.top}", box.bottom - box.top < 1500 * 0.2)
     }
 
     @Test fun everyExifOrientationEndsAtBottomLeftOfTheOrientedImage() {
@@ -113,7 +113,7 @@ class WatermarkRendererTest {
         assertEquals(margin, tl.top.toFloat(), 2f)
         val tr = inkBox(render(w, h, 1, style.copy(corner = Corner.TOP_RIGHT)))!!
         assertEquals(w - margin, tr.right.toFloat(), 2f)
-        val small = inkBox(render(w, h, 1))!!
+        val small = inkBox(render(w, h, 1, style.copy(size = WatermarkSize.SMALL)))!!
         val medium = inkBox(render(w, h, 1, style.copy(size = WatermarkSize.MEDIUM)))!!
         assertTrue(medium.right - medium.left > (small.right - small.left) * 1.25)
     }
@@ -152,5 +152,13 @@ class WatermarkRendererTest {
         WatermarkRenderer.draw(Canvas(raw), 1600, 1200, 6, content, style)
         File(dir, "wm_sample_orientation6_displayed.png").outputStream().use { toDisplay(raw, 6).compress(Bitmap.CompressFormat.PNG, 100, it) }
         assertTrue(min(sample.width, sample.height) > 0)
+    }
+
+    @Test fun placeLineIsDrawnAndLongPlacesNeverOverflow() {
+        val withPlace = content.copy(place = "Estadio Metropolitano Roberto Meléndez, Barranquillita, Barranquilla, Atlántico, Colombia")
+        val box = inkBox(render(1125, 1500, 1, c = withPlace))!!
+        val plain = inkBox(render(1125, 1500, 1))!!
+        assertTrue("con lugar es más alto", box.bottom - box.top > plain.bottom - plain.top)
+        assertTrue("derecha ${box.right}", box.right <= 1125 - 1125 * 0.02f + 2)
     }
 }

@@ -22,7 +22,9 @@ object SamplePhoto {
         val bmp = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
         drawScene(c, WIDTH.toFloat(), HEIGHT.toFloat())
-        val content = PhotoProcessor.buildContent(style, sampleRoute, nowMillis, ZoneId.systemDefault(), 10.96854, -74.78132, 31.0, style.company)
+        val content = PhotoProcessor.buildContent(
+            style, sampleRoute, nowMillis, ZoneId.systemDefault(), 10.96854, -74.78132, 31.0, style.company, "Cra. 54 #72-80, Prado, Barranquilla",
+        )
         WatermarkRenderer.draw(c, WIDTH, HEIGHT, 1, content, style)
         return bmp
     }

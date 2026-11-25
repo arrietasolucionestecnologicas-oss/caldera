@@ -67,7 +67,7 @@ class PipelineTest {
     }
 
     private fun processor(location: FakeLocation) =
-        PhotoProcessor(app, db, gallery, settings, location, TemperatureResolver({ null }, settings))
+        PhotoProcessor(app, db, gallery, settings, location, TemperatureResolver({ null }, settings), co.ast.campo.place.PlaceResolver({ FakePlaceProvider }, settings))
 
     /** JPEG 1600x1200 con degradado y EXIF típico de la cámara Samsung en retrato (orientación 6). */
     private fun cameraJpeg(orientation: Int = ExifInterface.ORIENTATION_ROTATE_90): File {
@@ -150,6 +150,7 @@ class PipelineTest {
 
         // Registro en la base y limpieza del temporal
         val saved = db.photos().get(photo.id)!!
+        assertEquals("Calle 72 #45-20, Prado, Barranquilla", saved.place)
         assertEquals(31.0, saved.temperatureC!!, 0.0)
         assertEquals(10.96854, saved.latitude!!, 0.0)
         assertEquals(8f, saved.accuracyM!!, 0f)
@@ -280,4 +281,8 @@ class PipelineTest {
         assertEquals(2, stats[project.id]!!.photoCount)
         assertEquals(2, stats[folder]!!.photoCount)
     }
+}
+
+private object FakePlaceProvider : co.ast.campo.place.PlaceProvider {
+    override suspend fun nameFor(lat: Double, lon: Double) = "Calle 72 #45-20, Prado, Barranquilla"
 }

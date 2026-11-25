@@ -43,6 +43,8 @@ data class PhotoEntity(
     val width: Int,
     val height: Int,
     val sizeBytes: Long,
+    /** Nombre del sitio (geocodificación) al momento de la foto, si se obtuvo. */
+    val place: String? = null,
 )
 
 data class FolderPhotoStat(val folderId: Long, val photoCount: Int, val lastAt: Long)
@@ -92,13 +94,22 @@ interface PhotoDao {
     suspend fun deleteAll(ids: List<Long>)
 }
 
-@Database(entities = [FolderEntity::class, PhotoEntity::class], version = 1, exportSchema = true)
+@Database(entities = [FolderEntity::class, PhotoEntity::class], version = 2, exportSchema = true)
 abstract class AstDatabase : RoomDatabase() {
     abstract fun folders(): FolderDao
     abstract fun photos(): PhotoDao
 
     companion object {
         fun create(context: Context): AstDatabase =
-            Room.databaseBuilder(context.applicationContext, AstDatabase::class.java, "ast_campo.db").build()
+            Room.databaseBuilder(context.applicationContext, AstDatabase::class.java, "ast_campo.db")
+                .addMigrations(MIGRATION_1_2)
+                .build()
+
+        /** v1.1: agrega el nombre del lugar a cada foto (las fotos de la v1.0 quedan sin lugar). */
+        val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE photos ADD COLUMN place TEXT")
+            }
+        }
     }
 }

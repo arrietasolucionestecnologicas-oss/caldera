@@ -2,14 +2,14 @@
 
 App Android nativa (Kotlin, Jetpack Compose, Material 3) de **Arrieta Soluciones Técnicas (A.S.T.)** para tomar fotos de trabajos de campo con marca de agua (ruta, fecha y hora, coordenadas y temperatura) y dejarlas organizadas por proyecto.
 
-Sin anuncios, sin cuentas, sin analítica, sin servidor propio. Las fotos nunca salen del teléfono; lo único que sale a internet son las coordenadas (redondeadas a ~1 km) para consultar la temperatura.
+Sin anuncios, sin cuentas, sin analítica, sin servidor propio. Las fotos nunca salen del teléfono. A internet salen solo coordenadas: redondeadas a ~1 km a Open-Meteo (temperatura) y, si dejas activo "Lugar", exactas al servicio de ubicación de Google (nombre del sitio).
 
 > Este repositorio también contiene el PWA "Analizador Térmico" (`index.html`, `simulador.js`, `sw.js`, `manifest.json`). No se tocó. La app Android vive en `ast-campo/`.
 
 ## Instalar en el celular
 
 1. En el celular abre este enlace en Chrome y descarga el APK:
-   `https://raw.githubusercontent.com/arrietasolucionestecnologicas-oss/caldera/main/releases/AST-Campo-v1.0.0.apk`
+   `https://raw.githubusercontent.com/arrietasolucionestecnologicas-oss/caldera/main/releases/AST-Campo-v1.1.0.apk`
 2. Al abrir el archivo Android pedirá permiso para instalar apps desconocidas desde el navegador: acepta en **Ajustes > Permitir de esta fuente**.
 3. Instala y abre **AST Campo**. Concede el permiso de **ubicación** (mientras usas la app).
 
@@ -17,13 +17,15 @@ Si Play Protect avisa de "app no verificada" es normal: el APK está firmado con
 
 ## Actualizar
 
-Descarga el APK de la versión nueva (`releases/AST-Campo-vX.Y.Z.apk`) y ábrelo: se instala **encima** de la anterior y conserva proyectos y fotos. Esto solo funciona porque todas las versiones se firman con el mismo keystore (ver abajo). Para comprobar que el archivo no se dañó, compara su SHA-256 con `releases/AST-Campo-v1.0.0.apk.sha256`.
+Descarga el APK de la versión nueva (v1.1.0 es compatible con v1.0.0: conserva tus proyectos; las fotos viejas quedan sin línea de lugar) (`releases/AST-Campo-vX.Y.Z.apk`) y ábrelo: se instala **encima** de la anterior y conserva proyectos y fotos. Esto solo funciona porque todas las versiones se firman con el mismo keystore (ver abajo). Para comprobar que el archivo no se dañó, compara su SHA-256 con `releases/AST-Campo-v1.1.0.apk.sha256`.
 
 ## Qué hace
 
 - **Proyectos y carpetas** con profundidad ilimitada (Proyecto > subcarpeta > subcarpeta...). Crear, renombrar, mover y eliminar en cualquier nivel (al eliminar pregunta qué hacer con las fotos). Plantilla editable para "Subestación" (Transformadores, Tableros, Generadores, Banco de condensadores). Recuerda el último destino por proyecto.
 - **Captura**: abre la cámara de Samsung por intent, aplica la marca al volver y queda lista para la siguiente foto. Chips de ruta destino, precisión GPS y temperatura (tocable para escribirla a mano). Deshacer la última foto.
-- **Marca de agua** (3 líneas, esquina inferior izquierda, azul marino translúcido con barra naranja). Configurable en Ajustes con vista previa en vivo.
+- **Marca de agua** (ruta, fecha y hora, coordenadas con temperatura y, opcional, el lugar; esquina inferior izquierda, azul marino translúcido con barra naranja). Tamaños Pequeño, Mediano (predeterminado) y Grande, configurable en Ajustes con vista previa en vivo.
+- **Lugar**: nombre aproximado del sitio (dirección, barrio, ciudad) obtenido del servicio de ubicación de Google. Es una dirección, **no** la lista de lugares cercanos de WhatsApp o Google Maps (esa usa otra base de datos de pago/con clave). Necesita internet y le envía las coordenadas a Google; se puede apagar en Ajustes.
+- **Revisar la foto al instante**: en la captura, toca la miniatura de la última foto para verla a pantalla completa con zoom.
 - **Galería**: las fotos se guardan con MediaStore en `Pictures/AST Campo/<Proyecto>/<Sub>/.../` y aparecen solas en la Galería, sin permisos de almacenamiento. Nombre de archivo `Proyecto_Sub_..._yyyyMMdd_HHmmss_NNN.jpg`.
 - **Copia original sin marca** (activada por defecto) en el almacenamiento privado de la app, visible desde el visor ("Original").
 - **EXIF** de la foto final: GPS, fecha y hora originales, orientación y datos técnicos de la cámara.
@@ -36,7 +38,7 @@ Descarga el APK de la versión nueva (`releases/AST-Campo-vX.Y.Z.apk`) y ábrelo
 - **Las carpetas vacías no existen en el almacenamiento.** Solo viven en la base de datos de la app hasta que se guarda la primera foto; "Mis archivos" las mostrará desde entonces.
 - **Galería de Samsung**: no pude comprobar con fuentes oficiales cómo muestra las subcarpetas. Los foros dan versiones contradictorias (álbumes planos, uno por carpeta final, o vista sin jerarquía). Asume que **no** muestra el árbol: por eso la app es el navegador principal, el nombre del archivo lleva la ruta y el árbol completo se ve en "Mis archivos > Imágenes > AST Campo". Puede que veas muchos álbumes pequeños en la Galería.
 - **Cámara Samsung por intent**: el intent no permite pedir resolución ni modo. Lo que no pude verificar: qué modos (Pro, 50 MP, etc.) quedan disponibles al abrirla así y en qué resolución devuelve la foto. Hallazgos de foros (anecdóticos, no oficiales): las resoluciones altas del modo Pro/200 MP no se exponen a apps de terceros. La Fase 2 (importar fotos hechas con la app completa de Cámara) cubre ese caso.
-- **La marca queda grabada en los píxeles** y no se puede quitar después; para eso existe la copia original. Esa copia vive en `Android/data/co.ast.campo/files/originales/`, que **Android 13 o superior no deja abrir desde "Mis archivos"**, y **se borra si desinstalas la app**. Respáldala (compartiéndola desde el visor) si es importante.
+- **La marca queda grabada en los píxeles** y no se puede quitar después; para eso existe la copia original. Una marca visible **no es prueba de autenticidad**: cualquier app puede escribir lo mismo. Lo que respalda una foto es la copia original con su EXIF (fecha y GPS de la cámara). La marca de AST Campo es de la app, no la nativa de Samsung; no la presentes como si lo fuera. Esa copia vive en `Android/data/co.ast.campo/files/originales/`, que **Android 13 o superior no deja abrir desde "Mis archivos"**, y **se borra si desinstalas la app**. Respáldala (compartiéndola desde el visor) si es importante.
 - Mover una foto o renombrar una carpeta cambia el archivo y la carpeta en la Galería, pero el texto de ruta ya impreso en la marca **no cambia**.
 - Si desinstalas la app o la reinstalas con otra firma, Android deja de permitirle modificar o borrar las fotos que creó (siguen en la Galería).
 - Procesar una foto de 50 MP necesita memoria: si falla, la foto se guarda sin marca (la app te avisa) o a menor resolución.
@@ -68,7 +70,7 @@ Requisitos: JDK 17+ (se probó con 21) y Android SDK con plataforma 37.2 y build
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease
 ```
 
-- Pruebas unitarias JVM: sanitización de nombres, rutas y nombres de archivo, formato de la marca, caché de temperatura, orientación EXIF, fechas EXIF, árbol de carpetas, parser y resolutor de Open-Meteo.
+- Pruebas unitarias JVM (91): sanitización de nombres, rutas y nombres de archivo, formato de la marca, caché de temperatura, orientación EXIF, fechas EXIF, árbol de carpetas, parser y resolutor de Open-Meteo.
 - Pruebas de integración con Robolectric (`app/src/testRobolectric`, activar con `-PwithRobolectric`): renderizado real de la marca en las 8 orientaciones EXIF, procesamiento de fotos con EXIF, operaciones de carpetas con Room y arranque de la UI. Descargan archivos grandes de Maven Central que a veces devuelven 429, así que corren en GitHub Actions como paso opcional que no bloquea el APK. En la sesión de desarrollo no pudieron correr localmente.
 - Si Android cierra la app mientras procesa fotos, las pendientes se reanudan al abrirla (cola en `cache/captures/*.json`, hasta 3 intentos).
 - Versiones: AGP 9.5.2, Kotlin 2.4.20, Compose BOM 2026.11.01, Room 2.8.5. `compileSdk` 37.2, `targetSdk` 37, `minSdk` 29.

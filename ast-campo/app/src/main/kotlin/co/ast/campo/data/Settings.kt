@@ -4,13 +4,15 @@ import android.content.Context
 import android.content.SharedPreferences
 import co.ast.campo.core.FolderTemplates
 import co.ast.campo.core.TempReading
+import co.ast.campo.place.PlaceCacheStore
+import co.ast.campo.place.PlaceReading
 import co.ast.campo.weather.TempCacheStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 enum class Corner { BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT }
-enum class WatermarkSize { SMALL, MEDIUM }
+enum class WatermarkSize { SMALL, MEDIUM, LARGE }
 enum class ThemeMode { DARK, LIGHT_HC }
 enum class WeatherMode { FREE, COMMERCIAL, OFF }
 
@@ -19,8 +21,9 @@ data class WatermarkSettings(
     val showDateTime: Boolean = true,
     val showCoords: Boolean = true,
     val showTemp: Boolean = true,
+    val showPlace: Boolean = true,
     val corner: Corner = Corner.BOTTOM_LEFT,
-    val size: WatermarkSize = WatermarkSize.SMALL,
+    val size: WatermarkSize = WatermarkSize.MEDIUM,
     /** Opacidad del fondo azul marino, 30 a 90 %. */
     val opacityPct: Int = 60,
     val company: String = "",
@@ -36,7 +39,7 @@ data class AppSettings(
 )
 
 /** Ajustes y pequeños estados persistentes. SharedPreferences basta: son pocos valores y no hay cuentas. */
-class SettingsRepository(context: Context) : TempCacheStore {
+class SettingsRepository(context: Context) : TempCacheStore, PlaceCacheStore {
     private val prefs: SharedPreferences = context.getSharedPreferences("ast_settings", Context.MODE_PRIVATE)
     private val _settings = MutableStateFlow(read())
     val settings: StateFlow<AppSettings> = _settings.asStateFlow()
@@ -59,6 +62,7 @@ class SettingsRepository(context: Context) : TempCacheStore {
                 showDateTime = prefs.getBoolean("wm_dt", dw.showDateTime),
                 showCoords = prefs.getBoolean("wm_coords", dw.showCoords),
                 showTemp = prefs.getBoolean("wm_temp", dw.showTemp),
+                showPlace = prefs.getBoolean("wm_place", dw.showPlace),
                 corner = enumOf("wm_corner", dw.corner),
                 size = enumOf("wm_size", dw.size),
                 opacityPct = prefs.getInt("wm_opacity", dw.opacityPct).coerceIn(30, 90),
@@ -79,6 +83,7 @@ class SettingsRepository(context: Context) : TempCacheStore {
             .putBoolean("wm_dt", s.watermark.showDateTime)
             .putBoolean("wm_coords", s.watermark.showCoords)
             .putBoolean("wm_temp", s.watermark.showTemp)
+            .putBoolean("wm_place", s.watermark.showPlace)
             .putString("wm_corner", s.watermark.corner.name)
             .putString("wm_size", s.watermark.size.name)
             .putInt("wm_opacity", s.watermark.opacityPct)
@@ -127,6 +132,20 @@ class SettingsRepository(context: Context) : TempCacheStore {
         prefs.edit()
             .putLong("tc_t", reading.celsius.toBits()).putLong("tc_lat", reading.lat.toBits())
             .putLong("tc_lon", reading.lon.toBits()).putLong("tc_at", reading.atMillis).apply()
+    }
+
+    // ---- Caché del último nombre de lugar ----
+    override fun loadPlace(): PlaceReading? {
+        val name = prefs.getString("pc_name", null) ?: return null
+        return PlaceReading(
+            name, Double.fromBits(prefs.getLong("pc_lat", 0)), Double.fromBits(prefs.getLong("pc_lon", 0)), prefs.getLong("pc_at", 0),
+        )
+    }
+
+    override fun savePlace(reading: PlaceReading) {
+        prefs.edit()
+            .putString("pc_name", reading.name).putLong("pc_lat", reading.lat.toBits())
+            .putLong("pc_lon", reading.lon.toBits()).putLong("pc_at", reading.atMillis).apply()
     }
 
     private companion object {

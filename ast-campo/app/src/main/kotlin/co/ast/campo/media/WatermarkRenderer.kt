@@ -21,6 +21,7 @@ data class WatermarkContent(
     val dateTime: String?,
     val data: String?,
     val company: String?,
+    val place: String? = null,
 )
 
 /**
@@ -38,12 +39,22 @@ object WatermarkRenderer {
     private fun typeface(weight: Int): Typeface =
         Typeface.create(Typeface.create("sans-serif", Typeface.NORMAL), weight, false)
 
+    private fun ellipsize(text: String, paint: Paint, maxW: Float): String {
+        var end = text.length
+        while (end > 1 && paint.measureText(text, 0, end) + paint.measureText("…") > maxW) end--
+        return text.substring(0, end).trimEnd() + "…"
+    }
+
     fun draw(canvas: Canvas, rawW: Int, rawH: Int, orientation: Int, content: WatermarkContent, style: WatermarkSettings) {
         val swap = OrientationMatrix.swapsAxes(orientation)
         val w = (if (swap) rawH else rawW).toFloat()
         val h = (if (swap) rawW else rawH).toFloat()
         val short = min(w, h)
-        val t = short * if (style.size == WatermarkSize.SMALL) 0.016f else 0.022f
+        val t = short * when (style.size) {
+            WatermarkSize.SMALL -> 0.022f
+            WatermarkSize.MEDIUM -> 0.030f
+            WatermarkSize.LARGE -> 0.040f
+        }
         val margin = short * 0.02f
         val padX = t * 0.75f
         val padY = t * 0.6f
@@ -66,6 +77,7 @@ object WatermarkRenderer {
         }
         content.dateTime?.let { rows.add(Row(it, dataPaint)) }
         content.data?.let { rows.add(Row(it, dataPaint)) }
+        content.place?.let { rows.add(Row(it, dataPaint)) }
         val company = content.company?.takeIf { it.isNotBlank() }
         var companyRow = -1
         if (company != null) {
@@ -73,6 +85,11 @@ object WatermarkRenderer {
         }
         if (rows.isEmpty()) return
 
+        // Ninguna línea puede salirse de la foto: las demasiado largas se cortan con "…".
+        for (i in rows.indices) {
+            val r = rows[i]
+            if (r.paint.measureText(r.text) > maxTextW) rows[i] = Row(ellipsize(r.text, r.paint, maxTextW), r.paint)
+        }
         val heights = rows.map { r -> r.paint.fontMetrics.let { it.descent - it.ascent } }
         var textW = rows.maxOf { it.paint.measureText(it.text) }
         val companyOnRow = companyRow in 0 until rows.size && rows[companyRow].paint !== companyPaint

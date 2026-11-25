@@ -25,8 +25,8 @@ android {
         applicationId = "co.ast.campo"
         minSdk = 29
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
         resourceConfigurations += listOf("es")
     }
 
@@ -109,7 +109,6 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     implementation(libs.play.services.location)
     implementation(libs.kotlinx.coroutines.play.services)
-    implementation(libs.coil.compose)
 
     testImplementation(libs.junit)
     testImplementation(libs.org.json)

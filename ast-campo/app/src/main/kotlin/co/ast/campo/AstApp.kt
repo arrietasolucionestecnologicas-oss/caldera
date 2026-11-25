@@ -12,6 +12,8 @@ import co.ast.campo.media.GalleryStore
 import co.ast.campo.media.LocationSource
 import co.ast.campo.media.LocationTracker
 import co.ast.campo.media.PhotoProcessor
+import co.ast.campo.place.AndroidGeocoderProvider
+import co.ast.campo.place.PlaceResolver
 import co.ast.campo.weather.OpenMeteoProvider
 import co.ast.campo.weather.TemperatureResolver
 import co.ast.campo.weather.WeatherProvider
@@ -39,7 +41,9 @@ class AstApp : Application() {
         TemperatureResolver(provider = ::currentProvider, store = settings)
     }
 
-    val processor by lazy { PhotoProcessor(this, database, gallery, settings, tracker, temperature) }
+    val places by lazy { PlaceResolver(provider = { AndroidGeocoderProvider(this) }, store = settings) }
+
+    val processor by lazy { PhotoProcessor(this, database, gallery, settings, tracker, temperature, places) }
     val captureManager by lazy { CaptureManager(this, processor, tracker, appScope) }
 
     /** Proveedor de temperatura según Ajustes. Sin clave en modo comercial no se consulta (no se cae al gratuito en silencio). */
