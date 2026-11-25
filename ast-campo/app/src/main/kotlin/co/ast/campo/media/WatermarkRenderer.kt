@@ -67,7 +67,12 @@ object WatermarkRenderer {
         val radius = t * 0.35f
 
         val routePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = t; color = Color.WHITE; typeface = typeface(600) }
-        val dataPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = t * 0.92f; color = GRAY; typeface = typeface(400) }
+        // Sin panel no hay contraste de fondo: todo el texto va en blanco puro y un poco más grueso.
+        val dataPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            textSize = t * 0.92f
+            color = if (style.background) GRAY else Color.WHITE
+            typeface = typeface(if (style.background) 400 else 500)
+        }
         val companyPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = t * 0.80f; color = ORANGE; typeface = typeface(600) }
 
         val maxTextW = w - 2 * margin - (barInset + barW + barGap + padX)
@@ -125,18 +130,22 @@ object WatermarkRenderer {
         } else {
             // Sombra suave para que las letras se lean sobre fondos claros y oscuros, sin recuadro.
             listOf(routePaint, dataPaint, companyPaint).forEach {
-                it.setShadowLayer(t * 0.16f, 0f, t * 0.05f, 0xE6000000.toInt())
+                it.setShadowLayer(t * 0.20f, 0f, t * 0.06f, 0xF2000000.toInt())
             }
         }
         val textX = left + barInset + barW + barGap
         var y = top + padY
+        // Sin panel el texto se dibuja dos veces: la sombra se vuelve más densa y se lee sobre fondos claros.
+        val passes = if (boxed) 1 else 2
         rows.forEachIndexed { i, row ->
-            canvas.drawText(row.text, textX, y - row.paint.fontMetrics.ascent, row.paint)
-            if (companyOnRow && i == companyRow) {
-                canvas.drawText(
-                    company!!, left + blockW - padX - companyW,
-                    y - row.paint.fontMetrics.ascent, companyPaint,
-                )
+            repeat(passes) {
+                canvas.drawText(row.text, textX, y - row.paint.fontMetrics.ascent, row.paint)
+                if (companyOnRow && i == companyRow) {
+                    canvas.drawText(
+                        company!!, left + blockW - padX - companyW,
+                        y - row.paint.fontMetrics.ascent, companyPaint,
+                    )
+                }
             }
             y += heights[i] + lineGap
         }
