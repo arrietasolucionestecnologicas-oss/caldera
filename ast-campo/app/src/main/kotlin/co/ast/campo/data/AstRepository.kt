@@ -171,7 +171,7 @@ class AstRepository(
         p.originalPath?.let { old ->
             val src = File(old)
             if (src.exists()) {
-                val root = originalsRootOf(src, p)
+                val root = originalsRootOf(src)
                 val dest = File(File(root, MediaPaths.originalRelativePath(segments)).apply { mkdirs() }, finalName)
                 newOriginal = if (src.renameTo(dest) || runCatching { src.copyTo(dest, true); src.delete() }.isSuccess) dest.absolutePath else old
             }
@@ -181,7 +181,7 @@ class AstRepository(
     }
 
     /** Raíz "originales" de la que cuelga la copia original (sube desde el archivo hasta la carpeta con ese nombre). */
-    private fun originalsRootOf(file: File, p: PhotoEntity): File {
+    private fun originalsRootOf(file: File): File {
         var cur: File? = file.parentFile
         while (cur != null && cur.name != "originales") cur = cur.parentFile
         return cur ?: file.parentFile ?: File(".")

@@ -115,10 +115,10 @@ class CaptureManager(
             manualTemperature = if (prefs.getBoolean("has_manual", false)) prefs.getFloat("manual", 0f).toDouble() else null,
         )
     }
+}
 
-    /** Borra capturas temporales viejas que quedaron sin procesar (más de 3 días). */
-    fun cleanOldTemporaries() {
-        val limit = System.currentTimeMillis() - 3L * 24 * 60 * 60 * 1000
-        File(context.cacheDir, "captures").listFiles()?.forEach { if (it.lastModified() < limit) it.delete() }
-    }
+/** Borra capturas temporales viejas que quedaron sin procesar (más de 3 días). */
+fun cleanOldCaptureTemporaries(context: Context) {
+    val limit = System.currentTimeMillis() - 3L * 24 * 60 * 60 * 1000
+    File(context.cacheDir, "captures").listFiles()?.forEach { if (it.lastModified() < limit) it.delete() }
 }

@@ -30,7 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.DriveFileMove
+import androidx.compose.material.icons.automirrored.filled.DriveFileMove
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -128,7 +128,7 @@ private fun ViewerContent(vm: ViewerVM, list: List<PhotoEntity>, startPhotoId: L
                 Modifier.fillMaxWidth().background(Color(0xFF0A0F1A)).navigationBarsPadding().padding(horizontal = 8.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                ActionButton("Mover", Icons.Filled.DriveFileMove) { moving = true }
+                ActionButton("Mover", Icons.AutoMirrored.Filled.DriveFileMove) { moving = true }
                 ActionButton("Compartir", Icons.Filled.Share) { share(ctx, photo) }
                 ActionButton(
                     if (originalFor == photo.id) "Con marca" else "Original",
@@ -144,7 +144,7 @@ private fun ViewerContent(vm: ViewerVM, list: List<PhotoEntity>, startPhotoId: L
                 val p = list[page]
                 val showOriginal = originalFor == p.id && p.originalPath != null
                 ZoomableImage(
-                    model = if (showOriginal) File(p.originalPath!!) else Uri.parse(p.mediaUri),
+                    model = if (showOriginal) File(p.originalPath) else Uri.parse(p.mediaUri),
                     description = p.displayName,
                     onZoomChange = { zoomed = it },
                 )

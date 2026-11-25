@@ -7,6 +7,7 @@ import co.ast.campo.data.AstRepository
 import co.ast.campo.data.SettingsRepository
 import co.ast.campo.data.WeatherMode
 import co.ast.campo.media.CaptureManager
+import co.ast.campo.media.cleanOldCaptureTemporaries
 import co.ast.campo.media.GalleryStore
 import co.ast.campo.media.LocationSource
 import co.ast.campo.media.LocationTracker
@@ -17,6 +18,7 @@ import co.ast.campo.weather.WeatherProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /** Contenedor de dependencias de la app (sin inyección de dependencias externa: son pocas piezas). */
 class AstApp : Application() {
@@ -52,6 +54,6 @@ class AstApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        captureManager.cleanOldTemporaries()
+        appScope.launch(Dispatchers.IO) { cleanOldCaptureTemporaries(this@AstApp) }
     }
 }

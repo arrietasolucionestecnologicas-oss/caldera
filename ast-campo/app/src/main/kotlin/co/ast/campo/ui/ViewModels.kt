@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
@@ -163,7 +165,10 @@ class CaptureVM(app: AstApp, private val handle: SavedStateHandle, initialFolder
     val temp: StateFlow<TempResult> = _temp.asStateFlow()
 
     init {
-        rememberDestination(dest.value)
+        viewModelScope.launch {
+            // El árbol puede no haber cargado todavía al crear el ViewModel.
+            tree.filterNotNull().first().projectOf(dest.value)?.let { app.settings.setLastDestination(it.id, dest.value) }
+        }
         viewModelScope.launch {
             app.captureManager.events.collect { e ->
                 when (e) {
