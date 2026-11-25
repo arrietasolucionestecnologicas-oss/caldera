@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.time.ZoneId
 
 /** Error pensado para mostrarse tal cual al usuario. */
 class UserError(message: String) : Exception(message)
@@ -173,8 +172,11 @@ class AstRepository(
 
     /** Lleva una foto a [folderId] (ruta [segments]): MediaStore, copia original y registro. */
     private suspend fun relocate(p: PhotoEntity, folderId: Long, segments: List<String>): Boolean {
-        val seq = SEQ.find(p.displayName)?.groupValues?.get(1)?.toIntOrNull() ?: 1
-        val newName = MediaPaths.fileName(segments, p.takenAt, ZoneId.systemDefault(), seq)
+        // Mismo número si la foto sigue en su carpeta (solo cambió la ruta) y está libre; si llega a otra carpeta,
+        // el siguiente de esa carpeta, para que la numeración quede 1, 2, 3... sin repetidos.
+        val others = photoDao.inFolders(listOf(folderId)).filter { it.id != p.id }.map { it.displayName }
+        val preferred = if (folderId == p.folderId) MediaPaths.sequenceOf(p.displayName) ?: 0 else 0
+        val newName = MediaPaths.fileName(segments, MediaPaths.freeSequence(others, preferred))
         val finalName = gallery.relocate(Uri.parse(p.mediaUri), MediaPaths.relativePath(segments), newName) ?: return false
         var newOriginal = p.originalPath
         p.originalPath?.let { old ->
@@ -194,9 +196,5 @@ class AstRepository(
         var cur: File? = file.parentFile
         while (cur != null && cur.name != "originales") cur = cur.parentFile
         return cur ?: file.parentFile ?: File(".")
-    }
-
-    private companion object {
-        val SEQ = Regex("_(\\d{3,})\\.jpg$")
     }
 }

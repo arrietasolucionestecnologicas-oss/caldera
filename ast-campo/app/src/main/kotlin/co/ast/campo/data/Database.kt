@@ -85,8 +85,8 @@ interface PhotoDao {
     @Query("SELECT * FROM photos WHERE folderId IN (:folderIds)")
     suspend fun inFolders(folderIds: List<Long>): List<PhotoEntity>
 
-    @Query("SELECT COUNT(*) FROM photos WHERE folderId = :folderId AND takenAt >= :fromMs AND takenAt < :toMs")
-    suspend fun countInRange(folderId: Long, fromMs: Long, toMs: Long): Int
+    @Query("SELECT displayName FROM photos WHERE folderId = :folderId")
+    suspend fun names(folderId: Long): List<String>
 
     @Update suspend fun update(photo: PhotoEntity)
 

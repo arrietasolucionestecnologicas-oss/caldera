@@ -110,7 +110,7 @@ class PipelineTest {
         val result = processor(FakeLocation(fix())).process(pending(src, folder))
         val photo = result.photo
 
-        assertEquals("Granja Solar X_Pruebas eléctricas_CT 5_20261125_140509_001.jpg", photo.displayName)
+        assertEquals("Granja Solar X_Pruebas eléctricas_CT 5_001.jpg", photo.displayName)
         assertTrue(result.hasLocation)
         assertEquals(TempSource.MANUAL, result.temperature.source)
         assertFalse(result.watermarkFailed)
@@ -157,9 +157,9 @@ class PipelineTest {
         assertFalse(src.exists())
         assertFalse(co.ast.campo.media.PendingStore.sidecar(src).exists())
 
-        // La segunda foto del mismo día lleva consecutivo 002
+        // La segunda foto de la carpeta lleva 002, también en otro día
         val second = processor(FakeLocation(fix())).process(pending(cameraJpeg(), folder))
-        assertTrue(second.photo.displayName, second.photo.displayName.endsWith("_002.jpg"))
+        assertEquals("Granja Solar X_Pruebas eléctricas_CT 5_002.jpg", second.photo.displayName)
     }
 
     @Test fun processorWithoutLocationSavesPhotoWithoutGps() = runBlocking {
@@ -219,7 +219,7 @@ class PipelineTest {
         repo.renameFolder(tests.id, "Ensayos")
         val item = gallery.items.values.single()
         assertEquals("Pictures/AST Campo/Granja Solar X/Ensayos/CT 5/", item.relativePath)
-        assertTrue(item.name, item.name.startsWith("Granja Solar X_Ensayos_CT 5_20261125_140509_001"))
+        assertTrue(item.name, item.name.startsWith("Granja Solar X_Ensayos_CT 5_001"))
         val moved = db.photos().get(photo.id)!!
         assertEquals(item.name, moved.displayName)
         assertTrue(File(moved.originalPath!!).exists())
@@ -285,4 +285,22 @@ class PipelineTest {
 
 private object FakePlaceProvider : co.ast.campo.place.PlaceProvider {
     override suspend fun nameFor(lat: Double, lon: Double) = "Calle 72 #45-20, Prado, Barranquilla"
+
+    @Test fun numberingIsPerFolderAndNeverReusedAfterDeleting() = runBlocking {
+        val folder = makeFolders()
+        val other = repo.createFolder(null, "Proyecto Y")
+        val a = processor(FakeLocation(fix())).process(pending(cameraJpeg(), folder)).photo
+        val b = processor(FakeLocation(fix())).process(pending(cameraJpeg(), folder)).photo
+        val c = processor(FakeLocation(fix())).process(pending(cameraJpeg(), folder)).photo
+        assertTrue(a.displayName.endsWith("_001.jpg") && b.displayName.endsWith("_002.jpg") && c.displayName.endsWith("_003.jpg"))
+        repo.deletePhoto(b.id)
+        val d = processor(FakeLocation(fix())).process(pending(cameraJpeg(), folder)).photo
+        assertTrue(d.displayName, d.displayName.endsWith("_004.jpg"))
+        // otra carpeta empieza en 001
+        val e = processor(FakeLocation(fix())).process(pending(cameraJpeg(), other)).photo
+        assertEquals("Proyecto Y_001.jpg", e.displayName)
+        // mover una foto a otra carpeta la numera con el siguiente de esa carpeta
+        repo.movePhoto(c.id, other)
+        assertEquals("Proyecto Y_002.jpg", db.photos().get(c.id)!!.displayName)
+    }
 }

@@ -9,7 +9,7 @@ Sin anuncios, sin cuentas, sin analítica, sin servidor propio. Las fotos nunca 
 ## Instalar en el celular
 
 1. En el celular abre este enlace en Chrome y descarga el APK:
-   `https://raw.githubusercontent.com/arrietasolucionestecnologicas-oss/caldera/main/releases/AST-Campo-v1.1.0.apk`
+   `https://raw.githubusercontent.com/arrietasolucionestecnologicas-oss/caldera/main/releases/AST-Campo-v1.2.0.apk`
 2. Al abrir el archivo Android pedirá permiso para instalar apps desconocidas desde el navegador: acepta en **Ajustes > Permitir de esta fuente**.
 3. Instala y abre **AST Campo**. Concede el permiso de **ubicación** (mientras usas la app).
 
@@ -17,7 +17,7 @@ Si Play Protect avisa de "app no verificada" es normal: el APK está firmado con
 
 ## Actualizar
 
-Descarga el APK de la versión nueva (v1.1.0 es compatible con v1.0.0: conserva tus proyectos; las fotos viejas quedan sin línea de lugar) (`releases/AST-Campo-vX.Y.Z.apk`) y ábrelo: se instala **encima** de la anterior y conserva proyectos y fotos. Esto solo funciona porque todas las versiones se firman con el mismo keystore (ver abajo). Para comprobar que el archivo no se dañó, compara su SHA-256 con `releases/AST-Campo-v1.1.0.apk.sha256`.
+Descarga el APK de la versión nueva (compatible con las anteriores: conserva tus proyectos; las fotos viejas conservan su nombre con fecha, salvo que muevas o renombres su carpeta, y no tienen línea de lugar) (`releases/AST-Campo-vX.Y.Z.apk`) y ábrelo: se instala **encima** de la anterior y conserva proyectos y fotos. Esto solo funciona porque todas las versiones se firman con el mismo keystore (ver abajo). Para comprobar que el archivo no se dañó, compara su SHA-256 con `releases/AST-Campo-v1.2.0.apk.sha256`.
 
 ## Qué hace
 
@@ -26,7 +26,7 @@ Descarga el APK de la versión nueva (v1.1.0 es compatible con v1.0.0: conserva 
 - **Marca de agua** (ruta, fecha y hora, coordenadas con temperatura y, opcional, el lugar; esquina inferior izquierda, azul marino translúcido con barra naranja). Tamaños Pequeño, Mediano (predeterminado) y Grande, configurable en Ajustes con vista previa en vivo.
 - **Lugar**: nombre aproximado del sitio (dirección, barrio, ciudad) obtenido del servicio de ubicación de Google. Es una dirección, **no** la lista de lugares cercanos de WhatsApp o Google Maps (esa usa otra base de datos de pago/con clave). Necesita internet y le envía las coordenadas a Google; se puede apagar en Ajustes.
 - **Revisar la foto al instante**: en la captura, toca la miniatura de la última foto para verla a pantalla completa con zoom.
-- **Galería**: las fotos se guardan con MediaStore en `Pictures/AST Campo/<Proyecto>/<Sub>/.../` y aparecen solas en la Galería, sin permisos de almacenamiento. Nombre de archivo `Proyecto_Sub_..._yyyyMMdd_HHmmss_NNN.jpg`.
+- **Galería**: las fotos se guardan con MediaStore en `Pictures/AST Campo/<Proyecto>/<Sub>/.../` y aparecen solas en la Galería, sin permisos de almacenamiento. Nombre de archivo `Proyecto_Sub_Sub_NNN.jpg`, por ejemplo `Granja Solar X_Pruebas eléctricas_CT 5_001.jpg`: la ruta de carpetas más el número de foto de **esa carpeta** (001, 002, 003...), consecutivo entre días y sin repetir números aunque borres fotos. Si la ruta es muy larga se recorta por el medio con "..." y el número se conserva. La fecha y hora siguen en el EXIF y en la fecha de captura del archivo. Al mover una foto a otra carpeta toma el siguiente número de esa carpeta.
 - **Copia original sin marca** (activada por defecto) en el almacenamiento privado de la app, visible desde el visor ("Original").
 - **EXIF** de la foto final: GPS, fecha y hora originales, orientación y datos técnicos de la cámara.
 - **Visor** con zoom, detalles, mover, eliminar y compartir.
@@ -70,7 +70,7 @@ Requisitos: JDK 17+ (se probó con 21) y Android SDK con plataforma 37.2 y build
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease
 ```
 
-- Pruebas unitarias JVM (91): sanitización de nombres, rutas y nombres de archivo, formato de la marca, caché de temperatura, orientación EXIF, fechas EXIF, árbol de carpetas, parser y resolutor de Open-Meteo.
+- Pruebas unitarias JVM (93): sanitización de nombres, rutas y nombres de archivo, formato de la marca, caché de temperatura, orientación EXIF, fechas EXIF, árbol de carpetas, parser y resolutor de Open-Meteo.
 - Pruebas de integración con Robolectric (`app/src/testRobolectric`, activar con `-PwithRobolectric`): renderizado real de la marca en las 8 orientaciones EXIF, procesamiento de fotos con EXIF, operaciones de carpetas con Room y arranque de la UI. Descargan archivos grandes de Maven Central que a veces devuelven 429, así que corren en GitHub Actions como paso opcional que no bloquea el APK. En la sesión de desarrollo no pudieron correr localmente.
 - Si Android cierra la app mientras procesa fotos, las pendientes se reanudan al abrirla (cola en `cache/captures/*.json`, hasta 3 intentos).
 - Versiones: AGP 9.5.2, Kotlin 2.4.20, Compose BOM 2026.11.01, Room 2.8.5. `compileSdk` 37.2, `targetSdk` 37, `minSdk` 29.

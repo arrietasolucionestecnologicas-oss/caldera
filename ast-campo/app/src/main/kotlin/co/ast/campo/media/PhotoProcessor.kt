@@ -26,8 +26,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 
 /** Foto pendiente de procesar, tal como la dejó la cámara. */
@@ -96,9 +94,8 @@ class PhotoProcessor(
         if (segments.isEmpty()) throw IOException("La carpeta de destino ya no existe")
         val s = settings.settings.value
 
-        val day = Instant.ofEpochMilli(takenAt).atZone(zone).toLocalDate()
-        val seq = db.photos().countInRange(p.folderId, startOfDay(day, zone), startOfDay(day.plusDays(1), zone)) + 1
-        val fileName = MediaPaths.fileName(segments, takenAt, zone, seq)
+        // Número de foto dentro de la carpeta (1, 2, 3...), consecutivo entre días.
+        val fileName = MediaPaths.fileName(segments, MediaPaths.nextSequence(db.photos().names(p.folderId)))
         val content = buildContent(s.watermark, segments, takenAt, zone, fix?.lat, fix?.lon, temp.celsius, s.watermark.company, place)
 
         // 1) Marca de agua. Si algo falla (p. ej. memoria) se guarda la foto sin marca antes que perderla.
@@ -206,8 +203,6 @@ class PhotoProcessor(
         val modified = file.lastModified()
         return if (modified > 0 && kotlin.math.abs(modified - launchedAt) < 2 * DAY_MS) modified else System.currentTimeMillis()
     }
-
-    private fun startOfDay(d: LocalDate, zone: ZoneId) = d.atStartOfDay(zone).toInstant().toEpochMilli()
 
     private fun originalsRoot(): File =
         context.getExternalFilesDir("originales") ?: File(context.filesDir, "originales")
