@@ -56,11 +56,13 @@ object WatermarkRenderer {
             WatermarkSize.LARGE -> 0.040f
         }
         val margin = short * 0.02f
-        val padX = t * 0.75f
-        val padY = t * 0.6f
-        val barW = t * 0.20f
-        val barInset = padX * 0.55f
-        val barGap = t * 0.65f
+        // Con fondo: panel con barra naranja. Sin fondo: solo texto, pegado al margen.
+        val boxed = style.background
+        val padX = if (boxed) t * 0.75f else 0f
+        val padY = if (boxed) t * 0.6f else 0f
+        val barW = if (boxed) t * 0.20f else 0f
+        val barInset = if (boxed) padX * 0.55f else 0f
+        val barGap = if (boxed) t * 0.65f else 0f
         val lineGap = t * 0.14f
         val radius = t * 0.35f
 
@@ -113,12 +115,19 @@ object WatermarkRenderer {
         canvas.concat(matrix)
 
         val alpha = (style.opacityPct.coerceIn(30, 90) / 100f * 255).roundToInt()
-        val bg = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = NAVY; this.alpha = alpha }
-        canvas.drawRoundRect(RectF(left, top, left + blockW, top + blockH), radius, radius, bg)
-        val bar = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ORANGE }
-        canvas.drawRoundRect(
-            RectF(left + barInset, top + padY, left + barInset + barW, top + blockH - padY), barW / 2, barW / 2, bar,
-        )
+        if (boxed) {
+            val bg = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = NAVY; this.alpha = alpha }
+            canvas.drawRoundRect(RectF(left, top, left + blockW, top + blockH), radius, radius, bg)
+            val bar = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ORANGE }
+            canvas.drawRoundRect(
+                RectF(left + barInset, top + padY, left + barInset + barW, top + blockH - padY), barW / 2, barW / 2, bar,
+            )
+        } else {
+            // Sombra suave para que las letras se lean sobre fondos claros y oscuros, sin recuadro.
+            listOf(routePaint, dataPaint, companyPaint).forEach {
+                it.setShadowLayer(t * 0.16f, 0f, t * 0.05f, 0xE6000000.toInt())
+            }
+        }
         val textX = left + barInset + barW + barGap
         var y = top + padY
         rows.forEachIndexed { i, row ->

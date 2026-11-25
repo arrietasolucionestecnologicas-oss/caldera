@@ -24,7 +24,8 @@ class WatermarkRendererTest {
     private val content = WatermarkContent(
         listOf("Granja Solar X", "Pruebas eléctricas", "CT 5"), "25/11/2026 14:05", "10.968540, -74.781320   31 °C", "A.S.T.",
     )
-    private val style = WatermarkSettings(company = "A.S.T.")
+    private val style = WatermarkSettings(company = "A.S.T.", background = true)
+    private val plain = WatermarkSettings(company = "A.S.T.", background = false)
 
     private fun render(w: Int, h: Int, orientation: Int, s: WatermarkSettings = style, c: WatermarkContent = content): Bitmap {
         val b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
@@ -160,5 +161,34 @@ class WatermarkRendererTest {
         val plain = inkBox(render(1125, 1500, 1))!!
         assertTrue("con lugar es más alto", box.bottom - box.top > plain.bottom - plain.top)
         assertTrue("derecha ${box.right}", box.right <= 1125 - 1125 * 0.02f + 2)
+    }
+
+    @Test fun plainModeDrawsOnlyLettersWithoutPanelOrBar() {
+        val boxed = render(2000, 1500, 1)
+        val text = render(2000, 1500, 1, plain)
+        val b = inkBox(boxed)!!
+        val t = inkBox(text)!!
+        // Sin panel: el texto queda en el margen, no hay relleno de bloque.
+        assertTrue("alto sin panel ${t.bottom - t.top} < con panel ${b.bottom - b.top}", t.bottom - t.top < b.bottom - b.top)
+        // Un punto dentro del panel pero lejos de las letras (esquina superior derecha del bloque) debe seguir blanco.
+        assertEquals(Color.WHITE, text.getPixel(b.right - 3, b.top + 3))
+        // La barra naranja no existe: ningún píxel claramente naranja.
+        var orange = 0
+        for (y in t.top..t.bottom) for (x in t.left..t.right) {
+            val c = text.getPixel(x, y)
+            if (Color.red(c) > 200 && Color.green(c) in 100..160 && Color.blue(c) < 80 && x < t.left + 12) orange++
+        }
+        assertEquals("la barra naranja no debe aparecer", 0, orange)
+    }
+
+    @Test fun plainModeKeepsMarginAndOrientation() {
+        val margin = 1500 * 0.02f
+        val t = inkBox(render(2000, 1500, 1, plain))!!
+        assertEquals(margin, t.left.toFloat(), 8f) // tolera el margen interno de las letras y la sombra
+        assertTrue(t.bottom <= 1500 - margin + 8)
+        val viaOrientation = toDisplay(render(1500, 2000, 6, plain), 6)
+        val direct = inkBox(render(2000, 1500, 1, plain))!!
+        val a = inkBox(viaOrientation)!!
+        assertEquals("o=6 left", direct.left.toFloat(), a.left.toFloat(), 3f)
     }
 }

@@ -111,11 +111,17 @@ fun SettingsScreen(vm: SettingsVM, onBack: () -> Unit) {
                 }
             }
 
-            Text("Opacidad del fondo: ${wm.opacityPct} %", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
-            Slider(
-                value = wm.opacityPct.toFloat(), onValueChange = { v -> setWm { it.copy(opacityPct = v.toInt().coerceIn(30, 90)) } },
-                valueRange = 30f..90f, modifier = Modifier.heightIn(min = 48.dp),
-            )
+            SwitchRow(
+                "Fondo azul marino", "Panel translúcido con barra naranja. Apagado: solo letras con una sombra suave.",
+                wm.background,
+            ) { v -> setWm { it.copy(background = v) } }
+            if (wm.background) {
+                Text("Opacidad del fondo: ${wm.opacityPct} %", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+                Slider(
+                    value = wm.opacityPct.toFloat(), onValueChange = { v -> setWm { it.copy(opacityPct = v.toInt().coerceIn(30, 90)) } },
+                    valueRange = 30f..90f, modifier = Modifier.heightIn(min = 48.dp),
+                )
+            }
             OutlinedTextField(
                 value = wm.company, onValueChange = { v -> setWm { it.copy(company = v.take(24)) } },
                 singleLine = true, label = { Text("Texto de empresa (opcional)") }, placeholder = { Text("A.S.T.") },

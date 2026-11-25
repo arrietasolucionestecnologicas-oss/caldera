@@ -22,6 +22,8 @@ data class WatermarkSettings(
     val showCoords: Boolean = true,
     val showTemp: Boolean = true,
     val showPlace: Boolean = true,
+    /** Panel azul marino con barra naranja detrás del texto. Apagado: solo letras con sombra suave. */
+    val background: Boolean = false,
     val corner: Corner = Corner.BOTTOM_LEFT,
     val size: WatermarkSize = WatermarkSize.MEDIUM,
     /** Opacidad del fondo azul marino, 30 a 90 %. */
@@ -63,6 +65,7 @@ class SettingsRepository(context: Context) : TempCacheStore, PlaceCacheStore {
                 showCoords = prefs.getBoolean("wm_coords", dw.showCoords),
                 showTemp = prefs.getBoolean("wm_temp", dw.showTemp),
                 showPlace = prefs.getBoolean("wm_place", dw.showPlace),
+                background = prefs.getBoolean("wm_bg", dw.background),
                 corner = enumOf("wm_corner", dw.corner),
                 size = enumOf("wm_size", dw.size),
                 opacityPct = prefs.getInt("wm_opacity", dw.opacityPct).coerceIn(30, 90),
@@ -84,6 +87,7 @@ class SettingsRepository(context: Context) : TempCacheStore, PlaceCacheStore {
             .putBoolean("wm_coords", s.watermark.showCoords)
             .putBoolean("wm_temp", s.watermark.showTemp)
             .putBoolean("wm_place", s.watermark.showPlace)
+            .putBoolean("wm_bg", s.watermark.background)
             .putString("wm_corner", s.watermark.corner.name)
             .putString("wm_size", s.watermark.size.name)
             .putInt("wm_opacity", s.watermark.opacityPct)
