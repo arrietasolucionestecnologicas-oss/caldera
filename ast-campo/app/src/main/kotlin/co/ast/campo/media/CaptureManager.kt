@@ -3,6 +3,7 @@ package co.ast.campo.media
 import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
+import android.os.SystemClock
 import androidx.core.content.FileProvider
 import co.ast.campo.data.PhotoEntity
 import co.ast.campo.weather.TempSource
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -25,6 +27,7 @@ sealed interface CaptureEvent {
         val temperatureSource: TempSource,
         val watermarkFailed: Boolean,
         val downscaled: Boolean,
+        val exifFailed: Boolean = false,
     ) : CaptureEvent
 
     data class Failed(val message: String) : CaptureEvent
@@ -68,6 +71,7 @@ class CaptureManager(
             .putLong("lon", (fix?.lon ?: 0.0).toBits())
             .putFloat("acc", fix?.accuracyM ?: 0f)
             .putLong("fix_elapsed", fix?.elapsedRealtimeMs ?: 0L)
+            .putLong("launch_elapsed", SystemClock.elapsedRealtime())
             .putBoolean("has_manual", manualTemperature != null)
             .putFloat("manual", (manualTemperature ?: 0.0).toFloat())
             .commit()
@@ -84,19 +88,42 @@ class CaptureManager(
             File(pending.filePath).delete()
             return
         }
-        _processing.value += 1
+        // Cola persistente: si el proceso muere mientras se procesa, se reanuda al abrir la app.
+        runCatching { PendingStore.write(pending, 0) }
+        enqueue(pending, attempts = 0)
+    }
+
+    /** Reprocesa fotos que quedaron a medias porque Android cerró la app (se llama al arrancar). */
+    fun recoverPending() {
+        val dir = File(context.cacheDir, "captures")
+        dir.listFiles { f -> f.extension == "json" }?.forEach { json ->
+            val (pending, attempts) = PendingStore.read(json) ?: run { json.delete(); return@forEach }
+            val photo = File(pending.filePath)
+            if (!photo.exists() || photo.length() == 0L || attempts >= PendingStore.MAX_ATTEMPTS) {
+                json.delete() // sin foto, o ya falló demasiadas veces (el JPEG se conserva en caché unos días)
+            } else {
+                enqueue(pending, attempts)
+            }
+        }
+    }
+
+    private fun enqueue(pending: PendingCapture, attempts: Int) {
+        _processing.update { it + 1 }
         scope.launch {
             try {
+                runCatching { PendingStore.write(pending, attempts + 1) }
                 val r = processor.process(pending)
                 _events.emit(
-                    CaptureEvent.Saved(r.photo, r.hasLocation, r.accuracyM, r.temperature.source, r.watermarkFailed, r.downscaled),
+                    CaptureEvent.Saved(r.photo, r.hasLocation, r.accuracyM, r.temperature.source, r.watermarkFailed, r.downscaled, r.exifFailed),
                 )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
+                // No se reintenta solo (sería un bucle); el JPEG original queda en caché unos días.
+                PendingStore.sidecar(File(pending.filePath)).delete()
                 _events.emit(CaptureEvent.Failed(e.message ?: "No se pudo guardar la foto"))
             } finally {
-                _processing.value -= 1
+                _processing.update { it - 1 }
             }
         }
     }
@@ -113,6 +140,7 @@ class CaptureManager(
             snapshotAccuracyM = if (hasFix) prefs.getFloat("acc", 0f) else null,
             snapshotElapsedMs = if (hasFix) prefs.getLong("fix_elapsed", 0L) else null,
             manualTemperature = if (prefs.getBoolean("has_manual", false)) prefs.getFloat("manual", 0f).toDouble() else null,
+            launchElapsedMs = prefs.getLong("launch_elapsed", 0L),
         )
     }
 }

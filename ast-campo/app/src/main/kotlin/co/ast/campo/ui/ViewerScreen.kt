@@ -107,6 +107,8 @@ private fun ViewerContent(vm: ViewerVM, list: List<PhotoEntity>, startPhotoId: L
     var details by remember { mutableStateOf(false) }
     var moving by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
+    // Si la foto con zoom desaparece (borrada o movida) no debe quedar bloqueado el deslizamiento.
+    LaunchedEffect(photo.id) { zoomed = false }
     val hasOriginal = photo.originalPath?.let { File(it).exists() } == true
 
     Scaffold(

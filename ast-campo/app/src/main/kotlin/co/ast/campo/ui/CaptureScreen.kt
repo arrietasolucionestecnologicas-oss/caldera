@@ -115,7 +115,9 @@ fun CaptureScreen(vm: CaptureVM, onBack: () -> Unit) {
     }
 
     // La cámara de Samsung se abre por intent (TakePicture); al volver, el resultado va al CaptureManager.
+    var cameraBusy by rememberSaveable { mutableStateOf(false) }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
+        cameraBusy = false
         app.captureManager.onCameraResult(ok)
     }
 
@@ -126,7 +128,11 @@ fun CaptureScreen(vm: CaptureVM, onBack: () -> Unit) {
     DisposableEffect(lifecycleOwner, hasPermission) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_START -> app.tracker.start()
+                Lifecycle.Event.ON_START -> {
+                    // El permiso pudo cambiar fuera de la app (Ajustes, "solo esta vez" vencido).
+                    hasPermission = app.tracker.hasPermission()
+                    app.tracker.start()
+                }
                 Lifecycle.Event.ON_STOP -> app.tracker.stop()
                 else -> Unit
             }
@@ -152,14 +158,17 @@ fun CaptureScreen(vm: CaptureVM, onBack: () -> Unit) {
     var confirmUndo by remember { mutableStateOf(false) }
 
     fun takePhoto() {
+        if (cameraBusy) return // un doble toque no debe abrir dos cámaras
         val uri = vm.prepareCapture()
         if (uri == null) {
             picking = true
             return
         }
         try {
+            cameraBusy = true
             camera.launch(uri)
         } catch (_: ActivityNotFoundException) {
+            cameraBusy = false
             vm.toast("No se encontró una app de cámara en el teléfono")
         }
     }

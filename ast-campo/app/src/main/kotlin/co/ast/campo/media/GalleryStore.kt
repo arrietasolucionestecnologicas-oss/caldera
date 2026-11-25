@@ -56,8 +56,8 @@ class GalleryStore(context: Context) : Gallery {
         if (resolver.update(uri, values, null, null) > 0) displayNameOf(uri) ?: displayName else null
     } catch (_: SecurityException) {
         null // por ejemplo la foto ya no pertenece a la app (reinstalación con otra firma)
-    } catch (_: IllegalArgumentException) {
-        null
+    } catch (_: Exception) {
+        null // destino inválido, archivo ausente u otro error de MediaProvider
     }
 
     /** true si ya no existe en la Galería o si se borró. false si existe pero no se pudo borrar. */

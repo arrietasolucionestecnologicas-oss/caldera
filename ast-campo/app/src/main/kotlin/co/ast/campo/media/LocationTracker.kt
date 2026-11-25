@@ -31,6 +31,17 @@ data class LocationFix(
     fun ageMs(nowElapsedMs: Long = SystemClock.elapsedRealtime()): Long = nowElapsedMs - elapsedRealtimeMs
 }
 
+/** Qué ubicación se estampa en una foto. */
+object LocationPolicy {
+    /** Una ubicación solo vale para la foto si se obtuvo hasta 60 s antes de abrir la cámara (o después). */
+    const val WINDOW_MS = 60_000L
+
+    fun pick(candidates: List<LocationFix>, launchElapsedMs: Long, nowElapsedMs: Long, windowMs: Long = WINDOW_MS): LocationFix? =
+        candidates
+            .filter { it.elapsedRealtimeMs >= launchElapsedMs - windowMs && it.elapsedRealtimeMs <= nowElapsedMs }
+            .minByOrNull { it.accuracyM }
+}
+
 /** Fuente de ubicación (interfaz para poder probar sin servicios de Google). */
 interface LocationSource {
     val fix: StateFlow<LocationFix?>

@@ -59,4 +59,9 @@ class NameSanitizerTest {
         assertEquals("subestacion norte", NameSanitizer.searchKey("Subestación NORTE"))
         assertEquals("ano", NameSanitizer.searchKey("Año"))
     }
+
+    @Test fun asciiFoldRemovesAccentsAndReplacesOtherSymbols() {
+        assertEquals("Subestacion Ano > Pruebas electricas", NameSanitizer.asciiFold("Subestación Año › Pruebas eléctricas").replace("?", ">"))
+        assertEquals("a?b", NameSanitizer.asciiFold("a\u2192b"))
+    }
 }

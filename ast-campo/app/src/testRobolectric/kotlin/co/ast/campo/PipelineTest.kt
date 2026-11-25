@@ -92,7 +92,7 @@ class PipelineTest {
         filePath = file.absolutePath, folderId = folderId, launchedAtMillis = java.time.OffsetDateTime.parse("2026-11-25T14:05:00-05:00").toInstant().toEpochMilli(),
         snapshotLat = if (withFix) 10.96854 else null, snapshotLon = if (withFix) -74.78132 else null,
         snapshotAccuracyM = if (withFix) 8f else null, snapshotElapsedMs = if (withFix) SystemClock.elapsedRealtime() else null,
-        manualTemperature = manualTemp,
+        manualTemperature = manualTemp, launchElapsedMs = SystemClock.elapsedRealtime(),
     )
 
     private fun fix() = LocationFix(10.96854, -74.78132, 8f, SystemClock.elapsedRealtime())
@@ -127,7 +127,7 @@ class PipelineTest {
         assertEquals("samsung", exif.getAttribute(ExifInterface.TAG_MAKE))
         assertEquals("SM-S938B", exif.getAttribute(ExifInterface.TAG_MODEL))
         assertEquals("AST Campo", exif.getAttribute(ExifInterface.TAG_SOFTWARE))
-        assertEquals("Granja Solar X › Pruebas eléctricas › CT 5", exif.getAttribute(ExifInterface.TAG_IMAGE_DESCRIPTION))
+        assertEquals("Granja Solar X > Pruebas electricas > CT 5", exif.getAttribute(ExifInterface.TAG_IMAGE_DESCRIPTION))
         val latLong = exif.latLong!!
         assertEquals(10.96854, latLong[0], 0.00001)
         assertEquals(-74.78132, latLong[1], 0.00001)
@@ -154,6 +154,7 @@ class PipelineTest {
         assertEquals(10.96854, saved.latitude!!, 0.0)
         assertEquals(8f, saved.accuracyM!!, 0f)
         assertFalse(src.exists())
+        assertFalse(co.ast.campo.media.PendingStore.sidecar(src).exists())
 
         // La segunda foto del mismo día lleva consecutivo 002
         val second = processor(FakeLocation(fix())).process(pending(cameraJpeg(), folder))

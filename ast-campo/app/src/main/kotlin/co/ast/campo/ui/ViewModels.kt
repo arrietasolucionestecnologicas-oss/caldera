@@ -184,7 +184,8 @@ class CaptureVM(app: AstApp, private val handle: SavedStateHandle, initialFolder
     }
 
     private fun savedWarning(e: CaptureEvent.Saved): String? = when {
-        e.watermarkFailed -> "Foto guardada SIN marca de agua (memoria insuficiente)"
+        e.watermarkFailed -> "Foto guardada SIN marca de agua (no se pudo dibujar)"
+        e.exifFailed -> "Foto guardada con marca, pero sin datos EXIF (GPS y fecha)"
         !e.hasLocation -> "Foto guardada sin coordenadas (sin ubicación)"
         e.accuracyM != null && e.accuracyM > WEAK_ACCURACY_M -> "Foto guardada. Precisión de ubicación baja (±${e.accuracyM.toInt()} m)"
         e.downscaled -> "Foto guardada a menor resolución (memoria insuficiente)"
@@ -207,6 +208,7 @@ class CaptureVM(app: AstApp, private val handle: SavedStateHandle, initialFolder
     }
 
     private suspend fun refreshTemperature() {
+        _manualTemp.value = app.settings.manualTemperature() // la temperatura a mano caduca a las 3 h
         val f = app.tracker.fix.value
         _temp.value = app.temperature.resolve(f?.lat, f?.lon, _manualTemp.value)
     }
@@ -222,6 +224,7 @@ class CaptureVM(app: AstApp, private val handle: SavedStateHandle, initialFolder
     /** Prepara la URI donde la cámara dejará la foto. Null si no hay destino válido. */
     fun prepareCapture(): Uri? {
         if (destSegments.value == null) return null
+        _manualTemp.value = app.settings.manualTemperature()
         return app.captureManager.prepare(dest.value, _manualTemp.value)
     }
 

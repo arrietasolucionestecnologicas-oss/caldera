@@ -52,6 +52,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -451,9 +452,11 @@ val ScreenPadding = PaddingValues(horizontal = 16.dp)
 @Composable
 fun CollectMessages(messages: kotlinx.coroutines.flow.SharedFlow<String>, host: androidx.compose.material3.SnackbarHostState) {
     androidx.compose.runtime.LaunchedEffect(messages) {
-        messages.collect { msg ->
-            host.currentSnackbarData?.dismiss()
-            host.showSnackbar(msg)
+        kotlinx.coroutines.coroutineScope {
+            messages.collect { msg ->
+                host.currentSnackbarData?.dismiss()
+                launch { host.showSnackbar(msg) } // sin bloquear: un aviso nuevo reemplaza al anterior
+            }
         }
     }
 }

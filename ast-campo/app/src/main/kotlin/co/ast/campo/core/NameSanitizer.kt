@@ -37,6 +37,11 @@ object NameSanitizer {
     fun searchKey(text: String): String =
         combiningMarks.replace(Normalizer.normalize(text, Normalizer.Form.NFD), "").lowercase(Locale.ROOT)
 
+    /** Sin tildes y solo ASCII imprimible (para campos EXIF que no admiten otros caracteres). */
+    fun asciiFold(text: String): String =
+        combiningMarks.replace(Normalizer.normalize(text, Normalizer.Form.NFD), "")
+            .map { if (it.code in 32..126) it else '?' }.joinToString("")
+
     /** Indica si [candidate] ya existe entre [siblings] (sin distinguir mayúsculas). */
     fun isDuplicate(candidate: String, siblings: Collection<String>): Boolean {
         val k = key(candidate)

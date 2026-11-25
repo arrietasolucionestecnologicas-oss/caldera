@@ -9,6 +9,7 @@ import androidx.exifinterface.media.ExifInterface
 import co.ast.campo.core.ExifDates
 import co.ast.campo.core.FolderTree
 import co.ast.campo.core.MediaPaths
+import co.ast.campo.core.NameSanitizer
 import co.ast.campo.core.WatermarkFormatter
 import co.ast.campo.data.AstDatabase
 import co.ast.campo.data.PhotoEntity
@@ -39,6 +40,8 @@ data class PendingCapture(
     /** SystemClock.elapsedRealtime() del momento de la ubicación guardada (solo válido en este arranque del equipo). */
     val snapshotElapsedMs: Long?,
     val manualTemperature: Double?,
+    /** SystemClock.elapsedRealtime() al abrir la cámara. */
+    val launchElapsedMs: Long,
 )
 
 data class ProcessedPhoto(
@@ -50,6 +53,8 @@ data class ProcessedPhoto(
     val watermarkFailed: Boolean,
     /** true si se tuvo que reducir la resolución por falta de memoria. */
     val downscaled: Boolean,
+    /** true si no se pudo escribir el EXIF (la foto sí quedó con marca). */
+    val exifFailed: Boolean = false,
 )
 
 class PhotoProcessor(
@@ -63,11 +68,14 @@ class PhotoProcessor(
     // Una foto a la vez: acota la memoria (un bitmap de 50 MP pesa ~200 MB) y hace determinista el consecutivo NNN.
     private val mutex = Mutex()
 
-    suspend fun process(p: PendingCapture): ProcessedPhoto = mutex.withLock {
-        withContext(Dispatchers.Default) { processLocked(p) }
+    suspend fun process(p: PendingCapture): ProcessedPhoto {
+        // Lo lento y dependiente de la red va FUERA del candado para no bloquear a las demás fotos.
+        val fix = resolveLocation(p)
+        val temp = temperature.resolve(fix?.lat, fix?.lon, p.manualTemperature)
+        return mutex.withLock { withContext(Dispatchers.Default) { processLocked(p, fix, temp) } }
     }
 
-    private suspend fun processLocked(p: PendingCapture): ProcessedPhoto {
+    private suspend fun processLocked(p: PendingCapture, fix: LocationFix?, temp: TempResult): ProcessedPhoto {
         val src = File(p.filePath)
         if (!src.exists() || src.length() == 0L) throw IOException("La cámara no devolvió la foto")
 
@@ -79,8 +87,6 @@ class PhotoProcessor(
 
         val zone = ZoneId.systemDefault()
         val takenAt = takenAtMillis(exif, src, p.launchedAtMillis, zone)
-        val fix = resolveLocation(p)
-        val temp = temperature.resolve(fix?.lat, fix?.lon, p.manualTemperature)
 
         val tree = FolderTree(db.folders().getAll().map { it.toNode() })
         val segments = tree.segments(p.folderId)
@@ -99,12 +105,14 @@ class PhotoProcessor(
         var outFile = marked
         var outW = bounds.outWidth
         var outH = bounds.outHeight
+        var exifFailed = false
         try {
             val r = renderWatermark(src, marked, orientation, content, s.watermark)
             downscaled = r.sample > 1
             outW = r.width
             outH = r.height
-            writeExif(exif, marked, orientation, takenAt, zone, fix, segments, outW, outH)
+            // Un fallo al escribir el EXIF no debe tirar la marca ya dibujada.
+            exifFailed = runCatching { writeExif(exif, marked, orientation, takenAt, zone, fix, segments, outW, outH) }.isFailure
         } catch (e: CancellationException) {
             marked.delete()
             throw e
@@ -136,9 +144,10 @@ class PhotoProcessor(
             width = outW, height = outH, sizeBytes = outFile.length(),
         )
         val id = db.photos().insert(entity)
+        PendingStore.sidecar(src).delete() // ya no hay nada que recuperar
         src.delete()
         if (outFile !== src) outFile.delete()
-        return ProcessedPhoto(entity.copy(id = id), fix != null, entity.accuracyM, temp, watermarkFailed, downscaled)
+        return ProcessedPhoto(entity.copy(id = id), fix != null, entity.accuracyM, temp, watermarkFailed, downscaled, exifFailed)
     }
 
     private class Rendered(val width: Int, val height: Int, val sample: Int)
@@ -173,15 +182,16 @@ class PhotoProcessor(
         }
     }
 
-    /** Mejor ubicación: entre la guardada al abrir la cámara y la actual, la más precisa y no vieja; si no hay, se pide una nueva. */
+    /**
+     * Ubicación de la foto: entre la guardada al abrir la cámara y la actual, la más precisa que no sea de más de 60 s
+     * antes de abrir la cámara (una ubicación de hace minutos sería de otro sitio). Si no hay, se pide una nueva.
+     */
     private suspend fun resolveLocation(p: PendingCapture): LocationFix? {
         val now = SystemClock.elapsedRealtime()
         val snapshot = if (p.snapshotLat != null && p.snapshotLon != null && p.snapshotElapsedMs != null) {
             LocationFix(p.snapshotLat, p.snapshotLon, p.snapshotAccuracyM ?: Float.MAX_VALUE, p.snapshotElapsedMs)
         } else null
-        val best = listOfNotNull(snapshot, tracker.fix.value)
-            .filter { it.ageMs(now) in 0..MAX_FIX_AGE_MS }
-            .minByOrNull { it.accuracyM }
+        val best = LocationPolicy.pick(listOfNotNull(snapshot, tracker.fix.value), p.launchElapsedMs, now)
         return best ?: tracker.currentOnce()
     }
 
@@ -216,7 +226,8 @@ class PhotoProcessor(
         out.setAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL, offset)
         out.setAttribute(ExifInterface.TAG_OFFSET_TIME, offset)
         out.setAttribute(ExifInterface.TAG_SOFTWARE, "AST Campo")
-        out.setAttribute(ExifInterface.TAG_IMAGE_DESCRIPTION, segments.joinToString(WatermarkFormatter.PATH_SEPARATOR))
+        // EXIF solo admite ASCII en este campo: se quitan tildes para no guardar signos de interrogación.
+        out.setAttribute(ExifInterface.TAG_IMAGE_DESCRIPTION, NameSanitizer.asciiFold(segments.joinToString(" > ")))
         if (width != null && height != null) {
             out.setAttribute(ExifInterface.TAG_PIXEL_X_DIMENSION, width.toString())
             out.setAttribute(ExifInterface.TAG_PIXEL_Y_DIMENSION, height.toString())
@@ -227,7 +238,6 @@ class PhotoProcessor(
 
     companion object {
         const val JPEG_QUALITY = 95
-        const val MAX_FIX_AGE_MS = 10 * 60 * 1000L
         private const val DAY_MS = 24 * 60 * 60 * 1000L
 
         /** Datos técnicos de la cámara que se conservan al recomprimir. */

@@ -69,7 +69,8 @@ Requisitos: JDK 17+ (se probó con 21) y Android SDK con plataforma 37.2 y build
 ```
 
 - Pruebas unitarias JVM: sanitización de nombres, rutas y nombres de archivo, formato de la marca, caché de temperatura, orientación EXIF, fechas EXIF, árbol de carpetas, parser y resolutor de Open-Meteo.
-- Pruebas de integración con Robolectric (`app/src/testRobolectric`, activar con `-PwithRobolectric`): renderizado real de la marca en las 8 orientaciones EXIF, procesamiento de fotos con EXIF, operaciones de carpetas con Room y arranque de la UI. Corren en GitHub Actions como paso opcional.
+- Pruebas de integración con Robolectric (`app/src/testRobolectric`, activar con `-PwithRobolectric`): renderizado real de la marca en las 8 orientaciones EXIF, procesamiento de fotos con EXIF, operaciones de carpetas con Room y arranque de la UI. Descargan archivos grandes de Maven Central que a veces devuelven 429, así que corren en GitHub Actions como paso opcional que no bloquea el APK. En la sesión de desarrollo no pudieron correr localmente.
+- Si Android cierra la app mientras procesa fotos, las pendientes se reanudan al abrirla (cola en `cache/captures/*.json`, hasta 3 intentos).
 - Versiones: AGP 9.5.2, Kotlin 2.4.20, Compose BOM 2026.11.01, Room 2.8.5. `compileSdk` 37.2, `targetSdk` 37, `minSdk` 29.
 
 ## Cambiar el logo

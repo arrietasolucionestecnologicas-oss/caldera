@@ -102,7 +102,8 @@ class AstRepository(
             }
             else -> photoDao.deleteAll(photos.map { it.id })
         }
-        folderDao.deleteAll(ids)
+        // Si alguna foto no se pudo quitar/mover, se conserva la carpeta para no dejar filas de foto huérfanas.
+        if (failed == 0) folderDao.deleteAll(ids)
         MoveReport(ok, failed)
     }
 
@@ -157,7 +158,14 @@ class AstRepository(
         var ok = 0
         var failed = 0
         photos.forEach { p ->
-            if (relocate(p, p.folderId, tree.segments(p.folderId))) ok++ else failed++
+            val moved = try {
+                relocate(p, p.folderId, tree.segments(p.folderId))
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                false
+            }
+            if (moved) ok++ else failed++
         }
         MoveReport(ok, failed)
     }

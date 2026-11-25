@@ -54,6 +54,9 @@ class AstApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        appScope.launch(Dispatchers.IO) { cleanOldCaptureTemporaries(this@AstApp) }
+        appScope.launch(Dispatchers.IO) {
+            cleanOldCaptureTemporaries(this@AstApp)
+            captureManager.recoverPending()
+        }
     }
 }
