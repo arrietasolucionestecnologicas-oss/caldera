@@ -40,6 +40,7 @@ jobs:
       # Pruebas de integración con Robolectric (renderizado real de la marca, Room, arranque de la UI).
       # No bloquean el APK: dependen de descargas grandes de Maven Central que a veces devuelven 429.
       - name: Pruebas de integración (Robolectric)
+        id: robolectric
         continue-on-error: true
         run: ./gradlew --no-daemon :app:testDebugUnitTest -PwithRobolectric
 
@@ -69,3 +70,10 @@ jobs:
         with:
           name: AST-Campo-apk
           path: ast-campo/app/build/outputs/apk/release/*.apk
+
+      # continue-on-error muestra el paso como "success" aunque falle: este paso deja el resultado real a la vista.
+      - name: Resultado real de las pruebas de integración
+        if: ${{ always() && steps.robolectric.outcome == 'failure' }}
+        run: |
+          echo "::error::Fallaron las pruebas de integración (Robolectric). Revisa el paso anterior."
+          exit 1

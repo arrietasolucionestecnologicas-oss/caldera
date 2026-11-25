@@ -281,10 +281,6 @@ class PipelineTest {
         assertEquals(2, stats[project.id]!!.photoCount)
         assertEquals(2, stats[folder]!!.photoCount)
     }
-}
-
-private object FakePlaceProvider : co.ast.campo.place.PlaceProvider {
-    override suspend fun nameFor(lat: Double, lon: Double) = "Calle 72 #45-20, Prado, Barranquilla"
 
     @Test fun numberingIsPerFolderAndNeverReusedAfterDeleting() = runBlocking {
         val folder = makeFolders()
@@ -303,4 +299,8 @@ private object FakePlaceProvider : co.ast.campo.place.PlaceProvider {
         repo.movePhoto(c.id, other)
         assertEquals("Proyecto Y_002.jpg", db.photos().get(c.id)!!.displayName)
     }
+}
+
+private object FakePlaceProvider : co.ast.campo.place.PlaceProvider {
+    override suspend fun nameFor(lat: Double, lon: Double) = "Calle 72 #45-20, Prado, Barranquilla"
 }
