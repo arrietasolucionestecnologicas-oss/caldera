@@ -28,7 +28,6 @@ data class WatermarkSettings(
     val size: WatermarkSize = WatermarkSize.MEDIUM,
     /** Opacidad del fondo azul marino, 30 a 90 %. */
     val opacityPct: Int = 60,
-    val company: String = "",
 )
 
 data class AppSettings(
@@ -69,7 +68,6 @@ class SettingsRepository(context: Context) : TempCacheStore, PlaceCacheStore {
                 corner = enumOf("wm_corner", dw.corner),
                 size = enumOf("wm_size", dw.size),
                 opacityPct = prefs.getInt("wm_opacity", dw.opacityPct).coerceIn(30, 90),
-                company = prefs.getString("wm_company", dw.company).orEmpty(),
             ),
             saveOriginal = prefs.getBoolean("save_original", d.saveOriginal),
             theme = enumOf("theme", d.theme),
@@ -91,7 +89,6 @@ class SettingsRepository(context: Context) : TempCacheStore, PlaceCacheStore {
             .putString("wm_corner", s.watermark.corner.name)
             .putString("wm_size", s.watermark.size.name)
             .putInt("wm_opacity", s.watermark.opacityPct)
-            .putString("wm_company", s.watermark.company)
             .putBoolean("save_original", s.saveOriginal)
             .putString("theme", s.theme.name)
             .putString("weather_mode", s.weatherMode.name)

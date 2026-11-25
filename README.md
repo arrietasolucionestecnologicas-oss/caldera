@@ -9,7 +9,7 @@ Sin anuncios, sin cuentas, sin analítica, sin servidor propio. Las fotos nunca 
 ## Instalar en el celular
 
 1. En el celular abre este enlace en Chrome y descarga el APK:
-   `https://raw.githubusercontent.com/arrietasolucionestecnologicas-oss/caldera/main/releases/AST-Campo-v1.3.0.apk`
+   `https://raw.githubusercontent.com/arrietasolucionestecnologicas-oss/caldera/main/releases/AST-Campo-v1.3.1.apk`
 2. Al abrir el archivo Android pedirá permiso para instalar apps desconocidas desde el navegador: acepta en **Ajustes > Permitir de esta fuente**.
 3. Instala y abre **AST Campo**. Concede el permiso de **ubicación** (mientras usas la app).
 
@@ -17,13 +17,13 @@ Si Play Protect avisa de "app no verificada" es normal: el APK está firmado con
 
 ## Actualizar
 
-Descarga el APK de la versión nueva (compatible con las anteriores: conserva tus proyectos; las fotos viejas conservan su nombre con fecha, salvo que muevas o renombres su carpeta, y no tienen línea de lugar) (`releases/AST-Campo-vX.Y.Z.apk`) y ábrelo: se instala **encima** de la anterior y conserva proyectos y fotos. Esto solo funciona porque todas las versiones se firman con el mismo keystore (ver abajo). Para comprobar que el archivo no se dañó, compara su SHA-256 con `releases/AST-Campo-v1.3.0.apk.sha256`.
+Descarga el APK de la versión nueva (compatible con las anteriores: conserva tus proyectos; las fotos viejas conservan su nombre con fecha, salvo que muevas o renombres su carpeta, y no tienen línea de lugar) (`releases/AST-Campo-vX.Y.Z.apk`) y ábrelo: se instala **encima** de la anterior y conserva proyectos y fotos. Esto solo funciona porque todas las versiones se firman con el mismo keystore (ver abajo). Para comprobar que el archivo no se dañó, compara su SHA-256 con `releases/AST-Campo-v1.3.1.apk.sha256`.
 
 ## Qué hace
 
 - **Proyectos y carpetas** con profundidad ilimitada (Proyecto > subcarpeta > subcarpeta...). Crear, renombrar, mover y eliminar en cualquier nivel (al eliminar pregunta qué hacer con las fotos). Plantilla editable para "Subestación" (Transformadores, Tableros, Generadores, Banco de condensadores). Recuerda el último destino por proyecto.
 - **Captura**: abre la cámara de Samsung por intent, aplica la marca al volver y queda lista para la siguiente foto. Chips de ruta destino, precisión GPS y temperatura (tocable para escribirla a mano). Deshacer la última foto.
-- **Marca de agua** (ruta, fecha y hora, coordenadas con temperatura y, opcional, el lugar; esquina inferior izquierda). Por defecto **solo letras blancas con una sombra suave, sin fondo ni barra**; en Ajustes se puede activar el panel azul marino translúcido con barra naranja. Tamaños Pequeño, Mediano (predeterminado) y Grande, configurable en Ajustes con vista previa en vivo.
+- **Marca de agua** (ruta, fecha y hora, coordenadas con temperatura y, opcional, el lugar; esquina inferior izquierda). La foto no lleva ningún texto, logo ni etiqueta de A.S.T. ni de la app, ni en la imagen ni en el EXIF (no se escribe el campo "Software"). Por defecto **solo letras blancas con una sombra suave, sin fondo ni barra**; en Ajustes se puede activar el panel azul marino translúcido con barra naranja. Tamaños Pequeño, Mediano (predeterminado) y Grande, configurable en Ajustes con vista previa en vivo.
 - **Lugar**: nombre aproximado del sitio (dirección, barrio, ciudad) obtenido del servicio de ubicación de Google. Es una dirección, **no** la lista de lugares cercanos de WhatsApp o Google Maps (esa usa otra base de datos de pago/con clave). Necesita internet y le envía las coordenadas a Google; se puede apagar en Ajustes.
 - **Revisar la foto al instante**: en la captura, toca la miniatura de la última foto para verla a pantalla completa con zoom.
 - **Galería**: las fotos se guardan con MediaStore en `Pictures/AST Campo/<Proyecto>/<Sub>/.../` y aparecen solas en la Galería, sin permisos de almacenamiento. Nombre de archivo `Proyecto_Sub_Sub_NNN.jpg`, por ejemplo `Granja Solar X_Pruebas eléctricas_CT 5_001.jpg`: la ruta de carpetas más el número de foto de **esa carpeta** (001, 002, 003...), consecutivo entre días y sin repetir números aunque borres fotos. Si la ruta es muy larga se recorta por el medio con "..." y el número se conserva. La fecha y hora siguen en el EXIF y en la fecha de captura del archivo. Al mover una foto a otra carpeta toma el siguiente número de esa carpeta.

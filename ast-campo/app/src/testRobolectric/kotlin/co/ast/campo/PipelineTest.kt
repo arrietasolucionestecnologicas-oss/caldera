@@ -128,7 +128,7 @@ class PipelineTest {
         assertEquals("-05:00", exif.getAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL))
         assertEquals("samsung", exif.getAttribute(ExifInterface.TAG_MAKE))
         assertEquals("SM-S938B", exif.getAttribute(ExifInterface.TAG_MODEL))
-        assertEquals("AST Campo", exif.getAttribute(ExifInterface.TAG_SOFTWARE))
+        assertNull("la app no deja su nombre en el EXIF", exif.getAttribute(ExifInterface.TAG_SOFTWARE))
         assertEquals("Granja Solar X > Pruebas electricas > CT 5", exif.getAttribute(ExifInterface.TAG_IMAGE_DESCRIPTION))
         val latLong = exif.latLong!!
         assertEquals(10.96854, latLong[0], 0.00001)

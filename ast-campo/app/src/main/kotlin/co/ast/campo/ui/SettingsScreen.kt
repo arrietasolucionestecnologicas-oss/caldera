@@ -122,11 +122,6 @@ fun SettingsScreen(vm: SettingsVM, onBack: () -> Unit) {
                     valueRange = 30f..90f, modifier = Modifier.heightIn(min = 48.dp),
                 )
             }
-            OutlinedTextField(
-                value = wm.company, onValueChange = { v -> setWm { it.copy(company = v.take(24)) } },
-                singleLine = true, label = { Text("Texto de empresa (opcional)") }, placeholder = { Text("A.S.T.") },
-                modifier = Modifier.fillMaxWidth(),
-            )
 
             // ------------------------------------------------------------ Plantilla
             SectionLabel("Plantilla de Subestación", Modifier.padding(top = 20.dp))

@@ -22,10 +22,10 @@ import kotlin.math.min
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class WatermarkRendererTest {
     private val content = WatermarkContent(
-        listOf("Granja Solar X", "Pruebas eléctricas", "CT 5"), "25/11/2026 14:05", "10.968540, -74.781320   31 °C", "A.S.T.",
+        listOf("Granja Solar X", "Pruebas eléctricas", "CT 5"), "25/11/2026 14:05", "10.968540, -74.781320   31 °C",
     )
-    private val style = WatermarkSettings(company = "A.S.T.", background = true)
-    private val plain = WatermarkSettings(company = "A.S.T.", background = false)
+    private val style = WatermarkSettings(background = true)
+    private val plain = WatermarkSettings(background = false)
 
     private fun render(w: Int, h: Int, orientation: Int, s: WatermarkSettings = style, c: WatermarkContent = content): Bitmap {
         val b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)

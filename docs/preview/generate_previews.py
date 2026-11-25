@@ -90,69 +90,71 @@ def synthetic_photo(w, h, seed=7):
 # --------------------------------------------------------------------------------------
 # Marca de agua: mismas proporciones que WatermarkRenderer.kt
 # --------------------------------------------------------------------------------------
-def draw_watermark(img, route, dt, data, company="", corner="BL", size="S", opacity=0.60):
+def draw_watermark(img, route, dt, data, company="", corner="BL", size="M", opacity=0.60, background=False, place=None):
+    """Replica de WatermarkRenderer.kt. Por defecto solo letras con sombra suave (sin panel ni barra)."""
     w, h = img.size
     short = min(w, h)
-    t = short * (0.016 if size == "S" else 0.022)
+    t = short * {"S": 0.022, "M": 0.030, "L": 0.040}[size]
     margin = short * 0.02
-    pad_x, pad_y = t * 0.75, t * 0.6
-    bar_w, bar_gap = t * 0.20, t * 0.65
-    gap = t * 0.35
+    pad_x, pad_y = (t * 0.75, t * 0.6) if background else (0, 0)
+    bar_w, bar_gap = (t * 0.20, t * 0.65) if background else (0, 0)
+    bar_inset = pad_x * 0.55
+    gap = t * 0.14
     radius = t * 0.35
 
     f_route = font("SemiBold", t)
-    f_data = font("Regular", t * 0.92)
-    f_co = font("SemiBold", t * 0.80)
-    lines = [(route, f_route, (255, 255, 255)), (dt, f_data, WM_GRAY), (data, f_data, WM_GRAY)]
+    f_data = font("Regular" if background else "Medium", t * 0.92)
+    white = (255, 255, 255) if not background else None
+    lines = [(route, f_route, (255, 255, 255)), (dt, f_data, WM_GRAY if background else (255, 255, 255)),
+             (data, f_data, WM_GRAY if background else (255, 255, 255))]
+    if place:
+        lines.append((place, f_data, WM_GRAY if background else (255, 255, 255)))
     lines = [ln for ln in lines if ln[0]]
-
-    def tw(txt, f):
-        return f.getlength(txt)
-
     heights = [f.getbbox("Ágy")[3] - f.getbbox("Ágy")[1] for _, f, _ in lines]
     asc = [f.getbbox("Ágy")[1] for _, f, _ in lines]
-    text_w = max(tw(x, f) for x, f, _ in lines)
-    co_w = 0
-    if company and len(lines) > 1:
-        co_w = tw(company, f_co)
-        text_w = max(text_w, tw(lines[1][0], lines[1][1]) + t * 1.2 + co_w)
-    block_w = pad_x + bar_w + bar_gap + text_w + pad_x
+    text_w = max(f.getlength(x) for x, f, _ in lines)
+    block_w = bar_inset + bar_w + bar_gap + text_w + pad_x
     block_h = pad_y * 2 + sum(heights) + gap * (len(lines) - 1)
-
     x0 = margin if corner[1] == "L" else w - margin - block_w
     y0 = h - margin - block_h if corner[0] == "B" else margin
 
-    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    d = ImageDraw.Draw(layer)
-    d.rounded_rectangle([x0, y0, x0 + block_w, y0 + block_h], radius=radius, fill=WM_BG + (int(255 * opacity),))
-    # barra naranja fina a la izquierda
-    d.rounded_rectangle(
-        [x0 + pad_x * 0.55, y0 + pad_y, x0 + pad_x * 0.55 + bar_w, y0 + block_h - pad_y],
-        radius=bar_w / 2, fill=ORANGE + (255,),
-    )
-    tx = x0 + pad_x * 0.55 + bar_w + bar_gap
+    base = img.convert("RGBA")
+    if background:
+        layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        d = ImageDraw.Draw(layer)
+        d.rounded_rectangle([x0, y0, x0 + block_w, y0 + block_h], radius=radius, fill=WM_BG + (int(255 * opacity),))
+        d.rounded_rectangle([x0 + bar_inset, y0 + pad_y, x0 + bar_inset + bar_w, y0 + block_h - pad_y],
+                            radius=bar_w / 2, fill=ORANGE + (255,))
+        base = Image.alpha_composite(base, layer)
+    tx = x0 + bar_inset + bar_w + bar_gap
+    texts = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    shadow = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    dt_, ds_ = ImageDraw.Draw(texts), ImageDraw.Draw(shadow)
     ty = y0 + pad_y
     for i, (txt, f, col) in enumerate(lines):
-        d.text((tx, ty - asc[i]), txt, font=f, fill=col + (255,))
-        if i == 1 and company:
-            d.text((x0 + block_w - pad_x - co_w, ty - asc[i] + (t * 0.92 - t * 0.80) * 0.5), company, font=f_co, fill=ORANGE + (255,))
+        dt_.text((tx, ty - asc[i]), txt, font=f, fill=col + (255,))
+        ds_.text((tx, ty - asc[i] + t * 0.06), txt, font=f, fill=(0, 0, 0, 242))
         ty += heights[i] + gap
-    return Image.alpha_composite(img.convert("RGBA"), layer).convert("RGB")
+    if not background:
+        sh = shadow.filter(ImageFilter.GaussianBlur(t * 0.10))
+        base = Image.alpha_composite(Image.alpha_composite(base, sh), sh)  # sombra densa
+    return Image.alpha_composite(base, texts).convert("RGB")
 
 
 SAMPLE = dict(
     route="Granja Solar X › Pruebas eléctricas › CT 5",
     dt="25/11/2026 14:05",
     data="10.968540, -74.781320   31 °C",
+    place="Cra. 54 #72-80, Prado, Barranquilla",
 )
 
 
 def make_watermark_samples():
     photo = synthetic_photo(2000, 1500)
-    wm = draw_watermark(photo, SAMPLE["route"], SAMPLE["dt"], SAMPLE["data"], company="A.S.T.")
+    wm = draw_watermark(photo, SAMPLE["route"], SAMPLE["dt"], SAMPLE["data"], place=SAMPLE["place"])
     wm.save(os.path.join(OUT, "marca_horizontal.jpg"), quality=92)
     portrait = synthetic_photo(1125, 1500, seed=11)
-    wm_p = draw_watermark(portrait, SAMPLE["route"], SAMPLE["dt"], SAMPLE["data"], company="A.S.T.")
+    wm_p = draw_watermark(portrait, SAMPLE["route"], SAMPLE["dt"], SAMPLE["data"], place=SAMPLE["place"])
     wm_p.save(os.path.join(OUT, "marca_vertical.jpg"), quality=92)
     # acercamiento a la esquina para juzgar el detalle
     crop = wm.crop((0, 1500 - 330, 1000, 1500))
@@ -435,7 +437,7 @@ def screen_settings(photo):
     s = Screen()
     s.top_bar("Ajustes", back=True)
     s.text(16, 122, "MARCA DE AGUA", 12, "SemiBold", fill=TEXT_DIM)
-    prev = draw_watermark(photo.copy(), SAMPLE["route"], SAMPLE["dt"], SAMPLE["data"], company="A.S.T.")
+    prev = draw_watermark(photo.copy(), SAMPLE["route"], SAMPLE["dt"], SAMPLE["data"], place=SAMPLE["place"])
     pw = 379
     ph = prev.resize((int(dp(pw)), int(dp(pw) * prev.height / prev.width)))
     s.im.paste(ph, (int(dp(16)), int(dp(144))))
@@ -476,7 +478,7 @@ def make_screens(photo):
         ("pantalla_1_proyectos", screen_projects()),
         ("pantalla_2_proyecto", screen_project()),
         ("pantalla_3_captura", screen_capture()),
-        ("pantalla_4_visor", screen_viewer(draw_watermark(photo.copy(), SAMPLE["route"], SAMPLE["dt"], SAMPLE["data"], company="A.S.T."))),
+        ("pantalla_4_visor", screen_viewer(draw_watermark(photo.copy(), SAMPLE["route"], SAMPLE["dt"], SAMPLE["data"], place=SAMPLE["place"]))),
         ("pantalla_5_ajustes", screen_settings(photo)),
     ]
     small = []

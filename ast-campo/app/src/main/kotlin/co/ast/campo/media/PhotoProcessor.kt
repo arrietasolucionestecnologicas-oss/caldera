@@ -96,7 +96,7 @@ class PhotoProcessor(
 
         // Número de foto dentro de la carpeta (1, 2, 3...), consecutivo entre días.
         val fileName = MediaPaths.fileName(segments, MediaPaths.nextSequence(db.photos().names(p.folderId)))
-        val content = buildContent(s.watermark, segments, takenAt, zone, fix?.lat, fix?.lon, temp.celsius, s.watermark.company, place)
+        val content = buildContent(s.watermark, segments, takenAt, zone, fix?.lat, fix?.lon, temp.celsius, place)
 
         // 1) Marca de agua. Si algo falla (p. ej. memoria) se guarda la foto sin marca antes que perderla.
         val marked = File(context.cacheDir, "captures/out_${SystemClock.elapsedRealtimeNanos()}.jpg")
@@ -223,7 +223,6 @@ class PhotoProcessor(
         out.setAttribute(ExifInterface.TAG_DATETIME, stamp)
         out.setAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL, offset)
         out.setAttribute(ExifInterface.TAG_OFFSET_TIME, offset)
-        out.setAttribute(ExifInterface.TAG_SOFTWARE, "AST Campo")
         // EXIF solo admite ASCII en este campo: se quitan tildes para no guardar signos de interrogación.
         out.setAttribute(ExifInterface.TAG_IMAGE_DESCRIPTION, NameSanitizer.asciiFold(segments.joinToString(" > ")))
         if (width != null && height != null) {
@@ -251,12 +250,11 @@ class PhotoProcessor(
 
         fun buildContent(
             style: WatermarkSettings, segments: List<String>, takenAt: Long, zone: ZoneId,
-            lat: Double?, lon: Double?, celsius: Double?, company: String, place: String? = null,
+            lat: Double?, lon: Double?, celsius: Double?, place: String? = null,
         ) = WatermarkContent(
             routeSegments = if (style.showRoute) segments else emptyList(),
             dateTime = if (style.showDateTime) WatermarkFormatter.dateTime(takenAt, zone) else null,
             data = WatermarkFormatter.dataLine(lat, lon, celsius, style.showCoords, style.showTemp),
-            company = company.trim().ifEmpty { null },
             place = if (style.showPlace) place?.trim()?.ifEmpty { null } else null,
         )
     }

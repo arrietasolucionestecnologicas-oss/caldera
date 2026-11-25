@@ -20,7 +20,6 @@ data class WatermarkContent(
     val routeSegments: List<String>,
     val dateTime: String?,
     val data: String?,
-    val company: String?,
     val place: String? = null,
 )
 
@@ -73,7 +72,6 @@ object WatermarkRenderer {
             color = if (style.background) GRAY else Color.WHITE
             typeface = typeface(if (style.background) 400 else 500)
         }
-        val companyPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = t * 0.80f; color = ORANGE; typeface = typeface(600) }
 
         val maxTextW = w - 2 * margin - (barInset + barW + barGap + padX)
         data class Row(val text: String, val paint: Paint)
@@ -85,11 +83,6 @@ object WatermarkRenderer {
         content.dateTime?.let { rows.add(Row(it, dataPaint)) }
         content.data?.let { rows.add(Row(it, dataPaint)) }
         content.place?.let { rows.add(Row(it, dataPaint)) }
-        val company = content.company?.takeIf { it.isNotBlank() }
-        var companyRow = -1
-        if (company != null) {
-            if (rows.size >= 2) companyRow = 1 else { rows.add(Row(company, companyPaint)); companyRow = rows.lastIndex }
-        }
         if (rows.isEmpty()) return
 
         // Ninguna línea puede salirse de la foto: las demasiado largas se cortan con "…".
@@ -98,10 +91,7 @@ object WatermarkRenderer {
             if (r.paint.measureText(r.text) > maxTextW) rows[i] = Row(ellipsize(r.text, r.paint, maxTextW), r.paint)
         }
         val heights = rows.map { r -> r.paint.fontMetrics.let { it.descent - it.ascent } }
-        var textW = rows.maxOf { it.paint.measureText(it.text) }
-        val companyOnRow = companyRow in 0 until rows.size && rows[companyRow].paint !== companyPaint
-        val companyW = if (companyOnRow) companyPaint.measureText(company!!) else 0f
-        if (companyOnRow) textW = max(textW, rows[companyRow].paint.measureText(rows[companyRow].text) + t * 1.2f + companyW)
+        val textW = rows.maxOf { it.paint.measureText(it.text) }
         val blockW = barInset + barW + barGap + textW + padX
         val blockH = padY * 2 + heights.sum() + lineGap * (rows.size - 1)
 
@@ -129,7 +119,7 @@ object WatermarkRenderer {
             )
         } else {
             // Sombra suave para que las letras se lean sobre fondos claros y oscuros, sin recuadro.
-            listOf(routePaint, dataPaint, companyPaint).forEach {
+            listOf(routePaint, dataPaint).forEach {
                 it.setShadowLayer(t * 0.20f, 0f, t * 0.06f, 0xF2000000.toInt())
             }
         }
@@ -140,12 +130,6 @@ object WatermarkRenderer {
         rows.forEachIndexed { i, row ->
             repeat(passes) {
                 canvas.drawText(row.text, textX, y - row.paint.fontMetrics.ascent, row.paint)
-                if (companyOnRow && i == companyRow) {
-                    canvas.drawText(
-                        company!!, left + blockW - padX - companyW,
-                        y - row.paint.fontMetrics.ascent, companyPaint,
-                    )
-                }
             }
             y += heights[i] + lineGap
         }
