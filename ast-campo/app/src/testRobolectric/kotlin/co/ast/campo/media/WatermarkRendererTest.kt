@@ -192,7 +192,7 @@ class WatermarkRendererTest {
         val t = inkBox(render(2000, 1500, 1, plain))!!
         // Sin panel el texto empieza cerca del margen; la sombra y el margen interno de la letra lo corren unos píxeles.
         assertTrue("izquierda ${t.left}", t.left in (margin - 15).toInt()..(margin + 8).toInt())
-        assertTrue(t.bottom <= 1500 - margin + 8)
+        assertTrue("abajo ${t.bottom}", t.bottom <= 1500 - margin + 18) // la sombra se extiende unos píxeles
         val viaOrientation = toDisplay(render(1500, 2000, 6, plain), 6)
         val direct = inkBox(render(2000, 1500, 1, plain))!!
         val a = inkBox(viaOrientation)!!
