@@ -47,7 +47,11 @@ class PipelineTest {
     private lateinit var repo: AstRepository
     private lateinit var root: File
 
+    private val originalZone: java.util.TimeZone = java.util.TimeZone.getDefault()
+
     @Before fun setUp() {
+        // El teléfono de A.S.T. está en Bogotá; el runner de CI usa UTC.
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/Bogota"))
         app = ApplicationProvider.getApplicationContext()
         root = File(app.cacheDir, "fake-gallery").apply { deleteRecursively(); mkdirs() }
         db = Room.inMemoryDatabaseBuilder(app, AstDatabase::class.java).allowMainThreadQueries().build()
@@ -57,6 +61,7 @@ class PipelineTest {
     }
 
     @After fun tearDown() {
+        java.util.TimeZone.setDefault(originalZone)
         db.close()
         root.deleteRecursively()
     }
