@@ -104,6 +104,8 @@ class PipelineTest {
     }
 
     @Test fun processorSavesMarkedPhotoKeepingOrientationAndWritingExif() = runBlocking {
+        // Con panel de fondo, para comprobar la posición de la marca en un punto fijo.
+        settings.update { it.copy(watermark = it.watermark.copy(background = true)) }
         val folder = makeFolders()
         val src = cameraJpeg()
         val srcBitmap = BitmapFactory.decodeFile(src.absolutePath)

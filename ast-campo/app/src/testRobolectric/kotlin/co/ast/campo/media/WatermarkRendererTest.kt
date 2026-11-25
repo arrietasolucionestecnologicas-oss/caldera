@@ -147,6 +147,12 @@ class WatermarkRendererTest {
         val sample = SamplePhoto.render(style)
         assertNotNull(sample)
         File(dir, "wm_sample_landscape.png").outputStream().use { sample.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        // Modo solo letras (el predeterminado): sobre la foto de ejemplo y sobre un fondo claro tipo baldosa.
+        File(dir, "wm_plain_on_sample.png").outputStream().use { SamplePhoto.render(plain).compress(Bitmap.CompressFormat.PNG, 100, it) }
+        val light = Bitmap.createBitmap(1125, 1500, Bitmap.Config.ARGB_8888)
+        Canvas(light).drawColor(Color.rgb(226, 220, 205))
+        WatermarkRenderer.draw(Canvas(light), 1125, 1500, 1, content.copy(place = "Calle 82c ## 27C-75, Suroccidente, Barranquilla"), plain)
+        File(dir, "wm_plain_on_light_portrait.png").outputStream().use { light.compress(Bitmap.CompressFormat.PNG, 100, it) }
         // Retrato típico de Samsung: píxeles 4:3 horizontales + EXIF 6, ya vistos orientados
         val raw = Bitmap.createBitmap(1600, 1200, Bitmap.Config.ARGB_8888)
         Canvas(raw).drawBitmap(sample, 0f, 0f, null)
@@ -184,7 +190,8 @@ class WatermarkRendererTest {
     @Test fun plainModeKeepsMarginAndOrientation() {
         val margin = 1500 * 0.02f
         val t = inkBox(render(2000, 1500, 1, plain))!!
-        assertEquals(margin, t.left.toFloat(), 8f) // tolera el margen interno de las letras y la sombra
+        // Sin panel el texto empieza cerca del margen; la sombra y el margen interno de la letra lo corren unos píxeles.
+        assertTrue("izquierda ${t.left}", t.left in (margin - 15).toInt()..(margin + 8).toInt())
         assertTrue(t.bottom <= 1500 - margin + 8)
         val viaOrientation = toDisplay(render(1500, 2000, 6, plain), 6)
         val direct = inkBox(render(2000, 1500, 1, plain))!!
